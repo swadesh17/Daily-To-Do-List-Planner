@@ -12,10 +12,8 @@
         .glass-card { background: rgba(30, 27, 75, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .glass-input { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
         .glass-input:focus { border-color: #8b5cf6; outline: none; }
-        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .animate-pulse-subtle { animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .badge-glow { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
         
-        /* Print Styles */
         @media print {
             body * { visibility: hidden; }
             #previewModal, #printableCard, #printableCard * { visibility: visible; }
@@ -43,7 +41,7 @@
             <div class="text-center mb-6">
                 <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 text-xs font-bold rounded-full uppercase tracking-wider">Official Study Tracker</span>
                 <h1 class="text-2xl font-extrabold mt-2 text-white">Daily Master To Do Planner</h1>
-                <p class="text-xs text-slate-400 mt-1">Created By Mahinur Rahman</p>
+                <p class="text-xs text-slate-400 mt-1">Developed By Mahinur Rahman</p>
             </div>
 
             <!-- Sign In / Sign Up Tabs -->
@@ -93,7 +91,7 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight">DAILY MASTER TO DO PLANNER</h1>
-                <p class="text-xs text-indigo-400 font-semibold mt-0.5">Created By Mahinur Rahman</p>
+                <p class="text-xs text-indigo-400 font-semibold mt-0.5">Developed By Mahinur Rahman</p>
             </div>
             
             <!-- To-Do List Number & Real Time BD Clock -->
@@ -108,6 +106,17 @@
                 </div>
             </div>
         </header>
+
+        <!-- ACCOUNT SETTINGS & DELETION -->
+        <div class="glass-card p-5 rounded-3xl space-y-3 border border-rose-500/20">
+            <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                <span>⚙️</span><span>Account Settings</span>
+            </h2>
+            <p class="text-[11px] text-slate-400">Permanently delete your account and remove your data from the global leaderboard.</p>
+            <button onclick="confirmDeleteAccount()" class="w-full py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold rounded-xl transition border border-rose-500/30">
+                🗑️ Delete Account & Data
+            </button>
+        </div>
 
         <!-- PREVIOUS 7 DAYS STATS & HISTORY -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -332,7 +341,36 @@
             </div>
         </div>
 
-        <!-- REASON OF FAILURE SECTION (Conditional if < 100%) -->
+        <!-- MILESTONE BADGES SECTION -->
+        <div class="glass-card p-5 rounded-3xl space-y-4 border border-indigo-500/20">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>🎖️</span><span>Milestone Badges & Earned Counts</span>
+                </h2>
+                <span class="text-[11px] text-indigo-400 font-semibold">Live Achievements</span>
+            </div>
+            <div id="badgesContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+        </div>
+
+        <!-- GLOBAL LIVE LEADERBOARD SECTION -->
+        <div class="glass-card p-5 rounded-3xl space-y-4 border border-indigo-500/20">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-3">
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>🏆</span><span>Global Live Leaderboard</span>
+                </h2>
+                <div class="flex flex-wrap gap-1 text-[10px]">
+                    <button onclick="setLeaderboardPillar('daily')" id="pillDaily" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold">Daily</button>
+                    <button onclick="setLeaderboardPillar('ratio')" id="pillRatio" class="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 font-bold hover:text-white">Focus Ratio</button>
+                    <button onclick="setLeaderboardPillar('avg')" id="pillAvg" class="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 font-bold hover:text-white">All-Time Avg</button>
+                    <button onclick="setLeaderboardPillar('total')" id="pillTotal" class="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 font-bold hover:text-white">Totals</button>
+                </div>
+            </div>
+            <div id="leaderboardList" class="space-y-2">
+                <div class="text-center text-xs text-slate-500 py-3">Loading real-time ranks...</div>
+            </div>
+        </div>
+
+        <!-- REASON OF FAILURE SECTION -->
         <div id="failureReasonCard" class="glass-card p-5 rounded-3xl space-y-2 border border-rose-500/30 hidden">
             <h2 class="text-sm font-bold text-rose-400 flex items-center space-x-2">
                 <span>⚠️</span><span>Reason of Failure</span>
@@ -353,7 +391,7 @@
                 </div>
             </div>
             <div class="text-center">
-                <h3 class="text-sm font-bold text-white">Main Self Study Tasks Completion</h3>
+                <h3 class="text-sm font-bold text-white">Main Self Study Tasks</h3>
                 <p class="text-[11px] text-slate-400">Calculated strictly from main self-study task checkboxes</p>
             </div>
 
@@ -382,19 +420,17 @@
                 <button onclick="closePreviewModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center text-slate-400 text-sm font-bold transition">✕</button>
             </div>
 
-            <!-- Printable Summary Card -->
             <div id="printableCard" class="bg-slate-900 p-6 rounded-3xl border border-indigo-500/30 space-y-5 text-slate-100 shadow-xl">
                 <div class="text-center border-b border-slate-800 pb-4">
                     <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-400">Daily Study Summary</span>
                     <h2 class="text-xl font-black text-white mt-1">DAILY MASTER TO DO PLANNER</h2>
-                    <p class="text-xs text-indigo-300 font-semibold mt-0.5">Created By Mahinur Rahman</p>
+                    <p class="text-xs text-indigo-300 font-semibold mt-0.5">Developed By Mahinur Rahman</p>
                     <div class="mt-3 inline-block bg-slate-950 px-4 py-1.5 rounded-xl border border-indigo-500/20">
                         <p id="prevPreviewName" class="text-sm font-bold text-white"></p>
                         <p id="prevPreviewMeta" class="text-xs text-indigo-400 font-medium"></p>
                     </div>
                 </div>
 
-                <!-- Top Metrics Grid -->
                 <div class="grid grid-cols-2 gap-3 text-center">
                     <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Self Study Hours</span>
@@ -416,43 +452,32 @@
                     </div>
                 </div>
 
-                <!-- Main Tasks Completed -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1">
-                        <span>📋</span><span>Main Self Study Tasks Completed</span>
+                        <span>📋</span><span>MAIN SELF STUDY TASKS</span>
                     </h3>
-                    <div id="prevPreviewTasks" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-2 text-xs text-slate-300">
-                        <!-- Task items -->
-                    </div>
+                    <div id="prevPreviewTasks" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-2 text-xs text-slate-300"></div>
                 </div>
 
-                <!-- Prayers -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1">
                         <span>🕌</span><span>5 Daily Prayers</span>
                     </h3>
-                    <div id="prevPreviewPrayers" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 flex flex-wrap gap-2 text-xs">
-                        <!-- prayer badges -->
-                    </div>
+                    <div id="prevPreviewPrayers" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 flex flex-wrap gap-2 text-xs"></div>
                 </div>
 
-                <!-- Exams -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center space-x-1">
                         <span>✍️</span><span>Exams Scheduled & Marks</span>
                     </h3>
-                    <div id="prevPreviewExams" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-2 text-xs text-slate-300">
-                        <!-- exams -->
-                    </div>
+                    <div id="prevPreviewExams" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-2 text-xs text-slate-300"></div>
                 </div>
 
-                <!-- Failure Reason if applicable -->
                 <div id="prevPreviewFailureContainer" class="space-y-1 hidden bg-rose-950/30 p-3 rounded-2xl border border-rose-500/30">
                     <h3 class="text-xs font-bold text-rose-400">Reason of Failure:</h3>
                     <p id="prevPreviewFailureText" class="text-xs text-slate-300 italic"></p>
                 </div>
 
-                <!-- Reward Status -->
                 <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-800 text-xs">
                     <span class="font-bold text-slate-400">Self Reward Status:</span>
                     <span id="prevPreviewReward" class="font-bold text-indigo-300">Not Claimed</span>
@@ -470,9 +495,7 @@
                 </h2>
                 <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center text-slate-400 text-sm font-bold transition">✕</button>
             </div>
-            <div id="historyListContainer" class="space-y-3">
-                <!-- Historic items -->
-            </div>
+            <div id="historyListContainer" class="space-y-3"></div>
         </div>
     </div>
 
@@ -498,8 +521,46 @@
         </div>
     </div>
 
+    <!-- Firebase SDK Imports (Firestore) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyA-r_BW-ciBI6I_1wuL0XzSqjg4zutibMM",
+          authDomain: "daily-master-to-do-planner.firebaseapp.com",
+          projectId: "daily-master-to-do-planner",
+          storageBucket: "daily-master-to-do-planner.firebasestorage.app",
+          messagingSenderId: "1013891638790",
+          appId: "1:1013891638790:web:9a632d935911db252cc587",
+          measurementId: "G-6QEEPQMJZ1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.firebaseDb = db;
+        window.firebaseDoc = doc;
+        window.firebaseSetDoc = setDoc;
+        window.firebaseDeleteDoc = deleteDoc;
+        window.firebaseUpdateDoc = updateDoc;
+        window.firebaseIncrement = increment;
+
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            const usersMap = new Map();
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const uKey = (data.username || docSnap.id).trim().toLowerCase();
+                usersMap.set(uKey, { id: docSnap.id, ...data });
+            });
+            window.globalLeaderboardUsers = Array.from(usersMap.values());
+            if (window.renderLeaderboard) {
+                window.renderLeaderboard();
+            }
+        });
+    </script>
+
     <script>
-        // APPLICATION STATE
         let currentUser = null;
         let authMode = 'signin';
         let studyGroups = [];
@@ -509,8 +570,20 @@
         let isRatingLocked = false;
         let rewardSaved = false;
         let currentEditingExamIndex = null;
-        let lastResetDateStr = null; // Keeps track of 5:00 AM BD day string
+        let lastResetDateStr = null;
+        let activePillar = 'daily';
         
+        const BADGES_DEF = [
+            { id: 'early', name: 'Early Riser', icon: '🌅', desc: 'Study logged early' },
+            { id: 'owl', name: 'Night Owl', icon: '🦉', desc: 'Late night session' },
+            { id: 'titan', name: 'Focus Titan', icon: '⚡', desc: 'Ratio > 5.0 & 50+ hrs' },
+            { id: 'marathon', name: 'Marathon', icon: '🏃‍♂️', desc: '8+ hrs in one day' },
+            { id: 'iron', name: 'Iron Will', icon: '🛡️', desc: 'Daily Focus Ratio > 5.0' },
+            { id: 'century', name: '100 Hours', icon: '🥉', desc: '100+ lifetime study hrs' },
+            { id: 'fivehundred', name: '500 Hours', icon: '🥈', desc: '500+ lifetime study hrs' },
+            { id: 'thousand', name: '1,000 Hours', icon: '🥇', desc: '1,000+ lifetime study hrs' }
+        ];
+
         const QUOTES_DB = [
             { quote: "Success isn't always about greatness. It's about consistency. Consistent hard work leads to success.", author: "Dwayne Johnson" },
             { quote: "Talent without working hard is nothing.", author: "Cristiano Ronaldo" },
@@ -522,31 +595,27 @@
             { quote: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" }
         ];
 
-        // INIT ON LOAD
         window.addEventListener('DOMContentLoaded', () => {
             checkPersistedAuth();
             startBDClock();
             loadDailyMotivation();
+            renderBadgesUI([]);
         });
 
-        // GET BD 5:00 AM DAY KEY (UTC+6)
         function getBDDayKey(dateObj = new Date()) {
             const bdTime = new Date(dateObj.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
-            // If before 5 AM BD time, it belongs to the previous day cycle
             if (bdTime.getHours() < 5) {
                 bdTime.setDate(bdTime.getDate() - 1);
             }
             return `${bdTime.getFullYear()}-${String(bdTime.getMonth() + 1).padStart(2, '0')}-${String(bdTime.getDate()).padStart(2, '0')}`;
         }
 
-        // BD CLOCK & AUTO RESET CHECKER
         function startBDClock() {
             setInterval(() => {
                 const now = new Date();
                 const options = { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
                 document.getElementById('bdClock').innerText = new Intl.DateTimeFormat('en-US', options).format(now);
 
-                // Live check if 5:00 AM cutoff day has crossed while page is open
                 if (currentUser && lastResetDateStr) {
                     const currentBDKey = getBDDayKey(now);
                     if (currentBDKey !== lastResetDateStr) {
@@ -558,7 +627,6 @@
 
         function loadDailyMotivation() {
             const bdKey = getBDDayKey();
-            // Numeric seed from BD day key
             const seed = parseInt(bdKey.replace(/-/g, ''), 10);
             const quoteIndex = seed % QUOTES_DB.length;
             const q = QUOTES_DB[quoteIndex];
@@ -566,7 +634,6 @@
             document.getElementById('quoteAuthor').innerText = `— ${q.author}`;
         }
 
-        // AUTHENTICATION LOGIC
         function switchAuthMode(mode) {
             authMode = mode;
             const btnIn = document.getElementById('tabSignIn');
@@ -587,7 +654,7 @@
             }
         }
 
-        function handleAuth(e) {
+        async function handleAuth(e) {
             e.preventDefault();
             const username = document.getElementById('authUsername').value.trim().toLowerCase();
             const pass = document.getElementById('authPassword').value;
@@ -647,33 +714,161 @@
             location.reload();
         }
 
-        // USER DATA PERSISTENCE & AUTO-RESET LOGIC
+        async function confirmDeleteAccount() {
+            if (!currentUser) return;
+            
+            const confirmName = prompt(`Type your username "${currentUser.username}" to confirm permanent account deletion:`);
+            if (confirmName !== currentUser.username) {
+                alert("Account deletion cancelled. Username did not match.");
+                return;
+            }
+
+            try {
+                if (window.firebaseDb && window.firebaseDoc && window.firebaseDeleteDoc) {
+                    await window.firebaseDeleteDoc(window.firebaseDoc(window.firebaseDb, "users", currentUser.username));
+                }
+            } catch (err) {
+                console.error("Error deleting document from Firestore:", err);
+            }
+
+            localStorage.removeItem(`studyTrackerData_${currentUser.username}`);
+            localStorage.removeItem(`studyTrackerHistory_${currentUser.username}`);
+            localStorage.removeItem('studyTrackerActiveUser');
+            
+            let usersDB = JSON.parse(localStorage.getItem('studyTrackerUsers') || '{}');
+            delete usersDB[currentUser.username];
+            localStorage.setItem('studyTrackerUsers', JSON.stringify(usersDB));
+
+            alert("Your account and data have been permanently deleted.");
+            currentUser = null;
+            location.reload();
+        }
+
         function getUserDataKey() {
             return `studyTrackerData_${currentUser.username}`;
         }
 
-        function saveUserData() {
+        // CALCULATE LIFETIME STUDY & UNIQUE BADGES CLEANLY FROM DEDUPLICATED HISTORY
+        function computeLifetimeMetrics() {
+            const historyKey = `studyTrackerHistory_${currentUser.username}`;
+            let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            
+            const studyActual = parseFloat(document.getElementById('actualStudyHours').value) || 0;
+            const screenActual = parseFloat(document.getElementById('actualScreenHours').value) || 0;
+            const focusRatio = screenActual > 0 ? (studyActual / screenActual).toFixed(2) : studyActual.toFixed(2);
+
+            // Build map of unique date entries to prevent double counting on re-saves
+            const dateMap = new Map();
+            historyList.forEach(item => {
+                if (item.dateKey) {
+                    dateMap.set(item.dateKey, item);
+                } else if (item.date) {
+                    dateMap.set(item.date, item);
+                }
+            });
+
+            // Add or overwrite today's live stats into the map
+            const todayKey = getBDDayKey();
+            const todayDateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            
+            const todayBadges = [];
+            if (studyActual >= 8) todayBadges.push('marathon');
+            if (parseFloat(focusRatio) > 5) todayBadges.push('iron');
+
+            // Calculate running lifetime hours excluding today first
+            let totalLifetime = studyActual;
+            dateMap.forEach((val, key) => {
+                if (key !== todayKey && key !== todayDateStr) {
+                    totalLifetime += (parseFloat(val.studyActual) || 0);
+                }
+            });
+
+            if (totalLifetime >= 100) todayBadges.push('century');
+            if (totalLifetime >= 500) todayBadges.push('fivehundred');
+            if (totalLifetime >= 1000) todayBadges.push('thousand');
+
+            // Save today's clean entry representation in map
+            dateMap.set(todayKey, {
+                dateKey: todayKey,
+                date: todayDateStr,
+                listNo: document.getElementById('todoListNumber').value,
+                percent: calculateCompletion(),
+                rating: isRatingLocked ? document.getElementById('selfRatingRange').value : 'N/A',
+                studyActual,
+                studyTarget: document.getElementById('targetStudyHours').value || '0',
+                screenActual,
+                screenTarget: document.getElementById('targetScreenHours').value || '0',
+                prayerCount: Object.values(prayers).filter(Boolean).length,
+                studyGroups: JSON.parse(JSON.stringify(studyGroups)),
+                exams: JSON.parse(JSON.stringify(exams)),
+                badges: todayBadges
+            });
+
+            // Re-sum total lifetime study from all unique dates correctly
+            let finalLifetimeStudy = 0;
+            let badgeCounts = {};
+            BADGES_DEF.forEach(b => badgeCounts[b.id] = 0);
+
+            dateMap.forEach(item => {
+                finalLifetimeStudy += (parseFloat(item.studyActual) || 0);
+                if (item.badges && Array.isArray(item.badges)) {
+                    item.badges.forEach(bId => {
+                        badgeCounts[bId] = (badgeCounts[bId] || 0) + 1;
+                    });
+                }
+            });
+
+            return {
+                totalLifetimeStudy: finalLifetimeStudy,
+                focusRatio: parseFloat(focusRatio),
+                badgeCounts,
+                unlockedBadges: todayBadges,
+                allHistory: Array.from(dateMap.values())
+            };
+        }
+
+        async function saveUserData() {
             if (!currentUser) return;
+            
+            const metrics = computeLifetimeMetrics();
+            renderBadgesUI(metrics.unlockedBadges, metrics.badgeCounts);
+
             const data = {
+                username: currentUser.username,
+                displayName: currentUser.displayName,
                 lastResetDateStr,
                 todoListNumber: document.getElementById('todoListNumber').value,
                 studyGroups,
                 exams,
                 prayers,
                 targetStudyHours: document.getElementById('targetStudyHours').value,
-                actualStudyHours: document.getElementById('actualStudyHours').value,
+                actualStudyHours: parseFloat(document.getElementById('actualStudyHours').value) || 0,
                 targetScreenHours: document.getElementById('targetScreenHours').value,
-                actualScreenHours: document.getElementById('actualScreenHours').value,
+                actualScreenHours: parseFloat(document.getElementById('actualScreenHours').value) || 0,
+                focusRatio: metrics.focusRatio,
                 classHours: document.getElementById('classHoursInput').value,
+                totalLifetimeStudy: metrics.totalLifetimeStudy,
                 selfRating: document.getElementById('selfRatingRange').value,
                 isHoursLocked,
                 isRatingLocked,
                 rewardText: document.getElementById('selfRewardInput').value,
                 rewardSaved,
                 rewardClaimed: document.getElementById('rewardClaimedCheck').checked,
-                failureReason: document.getElementById('failureReasonInput').value
+                failureReason: document.getElementById('failureReasonInput').value,
+                badges: metrics.unlockedBadges,
+                badgeCounts: metrics.badgeCounts,
+                updatedAt: new Date().toISOString()
             };
+
             localStorage.setItem(getUserDataKey(), JSON.stringify(data));
+
+            if (window.firebaseDb && window.firebaseDoc && window.firebaseSetDoc) {
+                try {
+                    await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDb, "users", currentUser.username), data, { merge: true });
+                } catch (err) {
+                    console.error("Firestore sync error:", err);
+                }
+            }
         }
 
         function loadUserData() {
@@ -713,10 +908,88 @@
                 renderStudyGroups();
                 renderExams();
                 renderPrayersUI();
+
+                const metrics = computeLifetimeMetrics();
+                renderBadgesUI(metrics.unlockedBadges, metrics.badgeCounts);
             } catch (e) { console.error(e); }
         }
 
-        // CHECK & AUTO-RESET AT 5:00 AM BD TIME
+        function renderBadgesUI(unlockedList = [], badgeCounts = {}) {
+            const container = document.getElementById('badgesContainer');
+            container.innerHTML = '';
+            BADGES_DEF.forEach(b => {
+                const unlocked = unlockedList.includes(b.id) || (badgeCounts[b.id] && badgeCounts[b.id] > 0);
+                const count = badgeCounts[b.id] || 0;
+                const div = document.createElement('div');
+                div.className = `p-2.5 rounded-2xl border text-center transition relative ${unlocked ? 'bg-indigo-950/50 border-indigo-500/50 badge-glow' : 'bg-slate-900/40 border-slate-800 opacity-40'}`;
+                div.innerHTML = `
+                    ${count > 0 ? `<span class="absolute top-2 right-2 px-1.5 py-0.5 bg-indigo-600 text-white font-black text-[9px] rounded-full">x${count}</span>` : ''}
+                    <div class="text-xl">${b.icon}</div>
+                    <div class="text-[11px] font-bold text-white mt-1">${b.name}</div>
+                    <div class="text-[9px] text-slate-400 mt-0.5">${b.desc}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.setLeaderboardPillar = function(pillar) {
+            activePillar = pillar;
+            ['pillDaily', 'pillRatio', 'pillAvg', 'pillTotal'].forEach(id => {
+                document.getElementById(id).className = "px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 font-bold hover:text-white";
+            });
+            const capPillar = pillar.charAt(0).toUpperCase() + pillar.slice(1);
+            document.getElementById(`pill${capPillar}`).className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold";
+            window.renderLeaderboard();
+        };
+
+        window.renderLeaderboard = function() {
+            const container = document.getElementById('leaderboardList');
+            if (!container) return;
+            let users = window.globalLeaderboardUsers || [];
+            container.innerHTML = '';
+
+            if (users.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-3">No active users on leaderboard yet.</div>`;
+                return;
+            }
+
+            if (activePillar === 'daily') users.sort((a, b) => (b.actualStudyHours || 0) - (a.actualStudyHours || 0));
+            else if (activePillar === 'ratio') users.sort((a, b) => (b.focusRatio || 0) - (a.focusRatio || 0));
+            else if (activePillar === 'avg') users.sort((a, b) => ((b.totalLifetimeStudy || 0) / 7) - ((a.totalLifetimeStudy || 0) / 7));
+            else if (activePillar === 'total') users.sort((a, b) => (b.totalLifetimeStudy || 0) - (a.totalLifetimeStudy || 0));
+
+            users.forEach((u, index) => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-900/60 p-2.5 rounded-xl flex items-center justify-between border border-slate-800 text-xs";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="font-bold text-slate-500 w-4 text-center">#${index + 1}</span>
+                        <div>
+                            <div class="font-bold text-white">${u.displayName || u.username}</div>
+                            <div class="text-[10px] text-slate-400">Ratio: ${u.focusRatio || 0} | Total: ${u.totalLifetimeStudy || 0}h</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-indigo-300 font-bold">${u.actualStudyHours || 0} hrs</span>
+                        <div class="flex gap-1">
+                            <button onclick="sendNudge('${u.username}', 'fire')" class="bg-slate-950 hover:bg-slate-800 px-2 py-1 rounded-lg border border-slate-800 text-[10px]">🔥 ${u.nudgesFire || 0}</button>
+                            <button onclick="sendNudge('${u.username}', 'clap')" class="bg-slate-950 hover:bg-slate-800 px-2 py-1 rounded-lg border border-slate-800 text-[10px]">👏 ${u.nudgesClap || 0}</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        };
+
+        window.sendNudge = async function(targetUsername, type) {
+            if (!window.firebaseDb) return;
+            const field = type === 'fire' ? 'nudgesFire' : 'nudgesClap';
+            const userRef = window.firebaseDoc(window.firebaseDb, 'users', targetUsername);
+            try {
+                await window.firebaseUpdateDoc(userRef, { [field]: window.firebaseIncrement(1) });
+            } catch (e) { console.error(e); }
+        };
+
         function checkAndTriggerDailyReset() {
             const currentBDKey = getBDDayKey();
             if (lastResetDateStr && lastResetDateStr !== currentBDKey) {
@@ -725,18 +998,12 @@
         }
 
         function performAutoDailyReset(newBDKey) {
-            // 1. Save current active day snapshot to permanent history archive automatically
-            saveTodayHistory(false); // false = silent auto-archive
+            saveTodayHistory(false);
 
-            // 2. Increment To-Do List Number
             let currentListNo = parseInt(document.getElementById('todoListNumber').value) || 1;
             document.getElementById('todoListNumber').value = currentListNo + 1;
 
-            // 3. Reset daily task checkboxes, actual study/screen hours, prayers, failure reason
-            studyGroups.forEach(g => {
-                g.tasks.forEach(t => t.completed = false);
-            });
-            
+            studyGroups.forEach(g => { g.tasks.forEach(t => t.completed = false); });
             prayers = { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
             
             document.getElementById('actualStudyHours').value = '';
@@ -745,7 +1012,6 @@
             document.getElementById('failureReasonInput').value = '';
             document.getElementById('rewardClaimedCheck').checked = false;
 
-            // Reset hours lock & rating lock for fresh inputs
             isHoursLocked = false;
             applyUnlockedHoursState();
             isRatingLocked = false;
@@ -753,7 +1019,6 @@
 
             lastResetDateStr = newBDKey;
 
-            // Save refreshed state
             renderStudyGroups();
             renderExams();
             renderPrayersUI();
@@ -762,7 +1027,6 @@
             updateStatsAndHistoryDisplay();
             loadDailyMotivation();
 
-            // 4. Show Notification Toast
             showAutoResetToast();
         }
 
@@ -778,7 +1042,6 @@
 
         function saveListNumber() { saveUserData(); }
 
-        // STUDY GROUPS & TASKS
         function addStudyGroup() {
             const subject = document.getElementById('taskSubject').value.trim();
             const chapter = document.getElementById('taskChapter').value.trim();
@@ -851,7 +1114,6 @@
             saveUserData();
         }
 
-        // EXAMS & MARKS
         function addExamEntry() {
             const examName = document.getElementById('examName').value.trim();
             const subject = document.getElementById('examSubject').value.trim();
@@ -959,7 +1221,6 @@
             saveUserData();
         }
 
-        // HOURS LOCK & SCREEN TIME ALERTS
         function toggleHoursLock() {
             if (!isHoursLocked) {
                 const targetStudy = document.getElementById('targetStudyHours').value;
@@ -970,9 +1231,6 @@
                 }
                 isHoursLocked = true;
                 applyLockedHoursState();
-            } else {
-                isHoursLocked = false;
-                applyUnlockedHoursState();
             }
             saveUserData();
         }
@@ -988,7 +1246,7 @@
             
             const btn = document.getElementById('hoursActionBtn');
             btn.innerText = "💾 Save Actual Hours";
-            btn.className = "w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition shadow-lg";
+            btn.className = "w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition shadow-lg cursor-pointer";
         }
 
         function applyUnlockedHoursState() {
@@ -1005,9 +1263,8 @@
             btn.className = "w-full py-3 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition shadow-lg";
         }
 
-        // Screen Time Alert Watcher
-        document.getElementById('actualScreenHours').addEventListener('input', updateScreenAlertBadge);
-        document.getElementById('targetScreenHours').addEventListener('input', updateScreenAlertBadge);
+        document.getElementById('actualScreenHours').addEventListener('input', () => { updateScreenAlertBadge(); saveUserData(); });
+        document.getElementById('actualStudyHours').addEventListener('input', () => { saveUserData(); });
 
         function updateScreenAlertBadge() {
             const target = parseFloat(document.getElementById('targetScreenHours').value) || 0;
@@ -1032,13 +1289,11 @@
                 alertBadge.innerText = `Exact limit reached`;
                 alertBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30";
             }
-            saveUserData();
         }
 
         document.getElementById('targetStudyHours').addEventListener('input', saveUserData);
-        document.getElementById('actualStudyHours').addEventListener('input', saveUserData);
+        document.getElementById('targetScreenHours').addEventListener('input', saveUserData);
 
-        // PRAYERS
         function togglePrayer(key) {
             prayers[key] = !prayers[key];
             renderPrayersUI();
@@ -1060,7 +1315,6 @@
             });
         }
 
-        // SELF RATING & REWARD
         function updateRatingVal(val) {
             document.getElementById('ratingDisplay').innerText = `${val} / 10`;
             saveUserData();
@@ -1112,7 +1366,6 @@
 
         document.getElementById('failureReasonInput').addEventListener('input', saveUserData);
 
-        // COMPLETION PERCENTAGE CALCULATION (MAIN TASKS ONLY)
         function calculateCompletion() {
             let totalMainTasks = 0;
             let completedMainTasks = 0;
@@ -1128,7 +1381,6 @@
 
             document.getElementById('completionPercentText').innerText = `${percent}%`;
             
-            // Update SVG Ring (r = 36, circumference = 226.19)
             const circumference = 226.19;
             const offset = circumference - (percent / 100) * circumference;
             document.getElementById('completionCircleRing').style.strokeDashoffset = offset;
@@ -1143,43 +1395,16 @@
             return percent;
         }
 
-        // SAVE TODAY'S HISTORY ARCHIVE
         function saveTodayHistory(showAlert = true) {
             if (!currentUser) return;
             const historyKey = `studyTrackerHistory_${currentUser.username}`;
-            let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
-
-            const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-            const listNo = document.getElementById('todoListNumber').value;
-            const percent = calculateCompletion();
-            const rating = isRatingLocked ? document.getElementById('selfRatingRange').value : 'N/A';
-            const studyActual = document.getElementById('actualStudyHours').value || '0';
-            const studyTarget = document.getElementById('targetStudyHours').value || '0';
-            const screenActual = document.getElementById('actualScreenHours').value || '0';
-            const screenTarget = document.getElementById('targetScreenHours').value || '0';
-
-            const prayerCount = Object.values(prayers).filter(Boolean).length;
-
-            const entry = {
-                date: todayStr,
-                listNo,
-                percent,
-                rating,
-                studyActual,
-                studyTarget,
-                screenActual,
-                screenTarget,
-                prayerCount,
-                studyGroups: JSON.parse(JSON.stringify(studyGroups)),
-                exams: JSON.parse(JSON.stringify(exams))
-            };
-
-            // Avoid duplicate today entry, replace or push
-            historyList = historyList.filter(h => h.date !== todayStr);
-            historyList.unshift(entry);
-            localStorage.setItem(historyKey, JSON.stringify(historyList));
+            
+            // Compute metrics which deduplicates today's entry cleanly
+            const metrics = computeLifetimeMetrics();
+            localStorage.setItem(historyKey, JSON.stringify(metrics.allHistory));
 
             updateStatsAndHistoryDisplay();
+            saveUserData();
             if (showAlert) {
                 alert("Today's planner history saved successfully!");
             }
@@ -1192,7 +1417,6 @@
 
             document.getElementById('historyCountText').innerText = `${historyList.length} Days Saved`;
 
-            // Calculate previous 7 days avg self study and screen time
             let totalStudy = 0;
             let totalScreen = 0;
             let count = Math.min(7, historyList.length);
@@ -1210,7 +1434,6 @@
             }
         }
 
-        // HISTORY MODAL
         function openHistoryModal() {
             const container = document.getElementById('historyListContainer');
             container.innerHTML = '';
@@ -1245,7 +1468,6 @@
             document.getElementById('historyModal').classList.add('hidden');
         }
 
-        // PREVIEW MODAL
         function openPreviewModal() {
             document.getElementById('prevPreviewName').innerText = currentUser.displayName;
             document.getElementById('prevPreviewMeta').innerText = `To-Do List No: #${document.getElementById('todoListNumber').value} • ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
@@ -1275,7 +1497,6 @@
             document.getElementById('prevPreviewClass').innerText = `${document.getElementById('classHoursInput').value || 0}h`;
             document.getElementById('prevPreviewRating').innerText = isRatingLocked ? `${document.getElementById('selfRatingRange').value}/10` : 'N/A';
 
-            // Tasks
             const tasksContainer = document.getElementById('prevPreviewTasks');
             tasksContainer.innerHTML = '';
             if (studyGroups.length === 0) {
@@ -1289,7 +1510,6 @@
                 });
             }
 
-            // Prayers
             const prayersContainer = document.getElementById('prevPreviewPrayers');
             prayersContainer.innerHTML = '';
             const prayerNames = { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' };
@@ -1300,7 +1520,6 @@
                 prayersContainer.appendChild(span);
             });
 
-            // Exams
             const examsContainer = document.getElementById('prevPreviewExams');
             examsContainer.innerHTML = '';
             if (exams.length === 0) {
@@ -1314,7 +1533,6 @@
                 });
             }
 
-            // Failure reason
             const failureContainer = document.getElementById('prevPreviewFailureContainer');
             const failureText = document.getElementById('failureReasonInput').value.trim();
             const percent = calculateCompletion();
@@ -1325,7 +1543,6 @@
                 failureContainer.classList.add('hidden');
             }
 
-            // Reward
             const isClaimed = document.getElementById('rewardClaimedCheck').checked;
             const rewardVal = document.getElementById('selfRewardInput').value.trim();
             const rewardStatus = document.getElementById('prevPreviewReward');
