@@ -1,0 +1,1258 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Study Tracker - DAILY MASTER TO DO PLANNER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card { background: rgba(30, 27, 75, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-input { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-input:focus { border-color: #8b5cf6; outline: none; }
+        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .animate-pulse-subtle { animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #previewModal, #printableCard, #printableCard * { visibility: visible; }
+            #previewModal { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
+            #printableCard { background: white !important; color: black !important; border: none !important; shadow: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-3 sm:p-6">
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="authScreen" class="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-indigo-500/20">
+            <div class="text-center mb-6">
+                <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 text-xs font-bold rounded-full uppercase tracking-wider">Official Study Tracker</span>
+                <h1 class="text-2xl font-extrabold mt-2 text-white">Daily Master To Do Planner</h1>
+                <p class="text-xs text-slate-400 mt-1">Created By Mahinur Rahman</p>
+            </div>
+
+            <!-- Sign In / Sign Up Tabs -->
+            <div class="flex rounded-xl bg-slate-900/80 p-1 mb-6">
+                <button id="tabSignIn" onclick="switchAuthMode('signin')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">Sign In</button>
+                <button id="tabSignUp" onclick="switchAuthMode('signup')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Sign Up</button>
+            </div>
+
+            <!-- Auth Form -->
+            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+                <div id="displayNameGroup" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Display Name</label>
+                    <input type="text" id="authDisplayName" placeholder="e.g. Mahinur Rahman" class="w-full px-4 py-3 rounded-xl glass-input text-sm text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Username / Email</label>
+                    <input type="text" id="authUsername" required placeholder="Enter username" class="w-full px-4 py-3 rounded-xl glass-input text-sm text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl glass-input text-sm text-white">
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="authRemember" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                        <span class="text-slate-300">Remember my info</span>
+                    </label>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition text-sm">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="mainApp" class="w-full max-w-xl hidden space-y-5 pb-12">
+        
+        <!-- HEADER & USER PROFILE -->
+        <header class="glass-card p-5 rounded-3xl flex flex-col gap-4 shadow-xl border border-indigo-500/20">
+            <div class="flex items-center justify-between">
+                <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[11px] font-extrabold uppercase tracking-widest rounded-full">Official Study Tracker</span>
+                <div class="flex items-center space-x-2">
+                    <span id="loggedInUserBadge" class="text-xs text-slate-300 font-medium"></span>
+                    <button onclick="logout()" class="p-2 bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 rounded-xl transition text-xs flex items-center space-x-1" title="Logout">
+                        🚪
+                    </button>
+                </div>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight">DAILY MASTER TO DO PLANNER</h1>
+                <p class="text-xs text-indigo-400 font-semibold mt-0.5">Created By Mahinur Rahman</p>
+            </div>
+            
+            <!-- To-Do List Number & Real Time BD Clock -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                <div class="flex items-center justify-between bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                    <span class="text-xs font-bold text-slate-400"># To-Do List No.</span>
+                    <input type="number" id="todoListNumber" value="1" onchange="saveListNumber()" class="w-20 px-3 py-1.5 text-center bg-slate-950 rounded-xl text-indigo-400 font-bold text-sm border border-slate-800">
+                </div>
+                <div class="flex items-center justify-between bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                    <span class="text-xs font-bold text-slate-400">BD Standard Time</span>
+                    <span id="bdClock" class="text-xs font-mono font-bold text-emerald-400">00:00:00 AM</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- PREVIOUS 7 DAYS STATS & HISTORY -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Previous 7 Days Avg Self Study</p>
+                    <h3 id="statAvgSelfStudy" class="text-lg font-black text-indigo-300 mt-1">0.0 hrs/day</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Excludes class hours</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-lg">📊</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Previous 7 Days Avg Screen Time</p>
+                    <h3 id="statAvgScreenTime" class="text-lg font-black text-amber-300 mt-1">0.0 hrs/day</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Log history tracking</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-lg">📱</div>
+            </div>
+        </div>
+
+        <!-- PLANNER HISTORY BUTTON -->
+        <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-slate-300">Planner History Archive</p>
+                <p id="historyCountText" class="text-[11px] text-slate-400">0 Days Saved</p>
+            </div>
+            <button onclick="openHistoryModal()" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-bold rounded-xl transition border border-indigo-500/30">
+                🕒 View All History
+            </button>
+        </div>
+
+        <!-- DAILY MOTIVATION QUOTE -->
+        <div class="glass-card p-5 rounded-3xl relative overflow-hidden border border-violet-500/20">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-violet-400">Daily Motivation (Refreshes Daily at 5:00 AM BD Time)</span>
+                <span class="text-base">💡</span>
+            </div>
+            <p id="quoteText" class="text-sm italic font-medium text-slate-200">"Loading motivation..."</p>
+            <p id="quoteAuthor" class="text-xs font-bold text-violet-300 mt-2 text-right">— Author</p>
+        </div>
+
+        <!-- SELF STUDY TO DO LIST SECTION -->
+        <div class="glass-card p-5 rounded-3xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>📖</span><span>Self Study To-Do List</span>
+                </h2>
+                <span class="text-[11px] text-slate-400">Commas separate main tasks</span>
+            </div>
+            
+            <div class="space-y-3 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/80">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" id="taskSubject" placeholder="Subject (e.g. Physics)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                    <input type="text" id="taskChapter" placeholder="Chapter / Topic (e.g. Mechanics)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                </div>
+                <input type="text" id="taskMainTasks" placeholder="Main Tasks separated by comma (e.g. Read Notes, Solve MCQ, Practice Numericals)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                <button onclick="addStudyGroup()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-md">
+                    + Add Subject Tasks Group
+                </button>
+            </div>
+
+            <div id="studyGroupsContainer" class="space-y-3">
+                <!-- Dynamically added task groups -->
+            </div>
+        </div>
+
+        <!-- EXAM TRACKER -->
+        <div class="glass-card p-5 rounded-3xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>✍️</span><span>Exam Tracker</span>
+                </h2>
+                <span class="text-[11px] text-slate-400">Upcoming & Daily Tests</span>
+            </div>
+
+            <div class="space-y-3 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/80">
+                <input type="text" id="examName" placeholder="Exam Name (e.g. Weekly Quiz)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white w-full">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" id="examSubject" placeholder="Subject" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                    <input type="text" id="examTopic" placeholder="Topic of Exam" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="examMarksObtained" placeholder="Marks Obtained (Optional)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                    <input type="number" id="examTotalMarks" placeholder="Total Marks" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                </div>
+                <button onclick="addExamEntry()" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition shadow-md">
+                    + Add Exam Entry
+                </button>
+            </div>
+
+            <div id="examsContainer" class="space-y-2">
+                <!-- Exam entries -->
+            </div>
+        </div>
+
+        <!-- HOURS & SCREEN TIME -->
+        <div class="glass-card p-5 rounded-3xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>⏱️</span><span>Hours & Screen Time</span>
+                </h2>
+            </div>
+
+            <!-- Self Study Hours -->
+            <div class="bg-slate-900/40 p-4 rounded-2xl border border-slate-800/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-200">Self Study Hours</span>
+                    <span id="studyModeIndicator" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold">Target Mode</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Target Hours</label>
+                        <input type="number" id="targetStudyHours" step="0.5" placeholder="e.g. 6" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Actual Self Study Hours</label>
+                        <input type="number" id="actualStudyHours" step="0.5" disabled placeholder="Lock target first" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white opacity-60">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen Time Limit -->
+            <div class="bg-slate-900/40 p-4 rounded-2xl border border-slate-800/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-200">Screen Time Limit</span>
+                    <span id="screenStatusAlert" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">Not Logged</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Target Limit (hrs)</label>
+                        <input type="number" id="targetScreenHours" step="0.5" placeholder="2" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Actual Screen (hrs)</label>
+                        <input type="number" id="actualScreenHours" step="0.5" disabled placeholder="Lock target first" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white opacity-60">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lock / Save Hours Button -->
+            <button id="hoursActionBtn" onclick="toggleHoursLock()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition shadow-lg">
+                🔒 Lock Target Hours
+            </button>
+        </div>
+
+        <!-- CLASS TIME -->
+        <div class="glass-card p-5 rounded-3xl flex items-center justify-between">
+            <div>
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>🏫</span><span>Class Time</span>
+                </h2>
+                <p class="text-[11px] text-slate-400 mt-0.5">Total duration in class/coaching</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <input type="number" id="classHoursInput" step="0.5" value="0" onchange="calculateCompletion()" class="w-20 px-3 py-2 text-center bg-slate-900 rounded-xl text-white font-bold text-sm border border-slate-800">
+                <span class="text-xs text-slate-400">hrs</span>
+            </div>
+        </div>
+
+        <!-- 5 DAILY PRAYERS -->
+        <div class="glass-card p-5 rounded-3xl space-y-3">
+            <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                <span>🕌</span><span>5 Daily Prayers</span>
+            </h2>
+            <div class="grid grid-cols-5 gap-2">
+                <button onclick="togglePrayer('fajr')" id="prayerFajr" class="py-2.5 px-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-[11px] font-bold rounded-xl border border-slate-800 transition flex flex-col items-center">
+                    <span>Fajr</span><span class="text-xs mt-1 text-slate-500" id="indFajr">⚪</span>
+                </button>
+                <button onclick="togglePrayer('dhuhr')" id="prayerDhuhr" class="py-2.5 px-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-[11px] font-bold rounded-xl border border-slate-800 transition flex flex-col items-center">
+                    <span>Dhuhr</span><span class="text-xs mt-1 text-slate-500" id="indDhuhr">⚪</span>
+                </button>
+                <button onclick="togglePrayer('asr')" id="prayerAsr" class="py-2.5 px-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-[11px] font-bold rounded-xl border border-slate-800 transition flex flex-col items-center">
+                    <span>Asr</span><span class="text-xs mt-1 text-slate-500" id="indAsr">⚪</span>
+                </button>
+                <button onclick="togglePrayer('maghrib')" id="prayerMaghrib" class="py-2.5 px-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-[11px] font-bold rounded-xl border border-slate-800 transition flex flex-col items-center">
+                    <span>Maghrib</span><span class="text-xs mt-1 text-slate-500" id="indMaghrib">⚪</span>
+                </button>
+                <button onclick="togglePrayer('isha')" id="prayerIsha" class="py-2.5 px-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-[11px] font-bold rounded-xl border border-slate-800 transition flex flex-col items-center">
+                    <span>Isha</span><span class="text-xs mt-1 text-slate-500" id="indIsha">⚪</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SELF RATING & REWARD -->
+        <div class="glass-card p-5 rounded-3xl space-y-4">
+            <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                <span>⭐</span><span>Self Rating & Reward</span>
+            </h2>
+            
+            <!-- Rating -->
+            <div class="space-y-2 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-slate-300">Daily Self Rating:</span>
+                    <span id="ratingDisplay" class="font-extrabold text-indigo-400 text-sm">8 / 10</span>
+                </div>
+                <input type="range" id="selfRatingRange" min="1" max="10" value="8" oninput="updateRatingVal(this.value)" class="w-full accent-indigo-500 cursor-pointer">
+                <div class="flex items-center justify-between pt-1">
+                    <span id="ratingLockStatus" class="text-[11px] text-slate-400">Status: Unlocked (Shows N/A in preview unless locked)</span>
+                    <button id="ratingLockBtn" onclick="toggleRatingLock()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold rounded-lg transition">
+                        🔒 Lock Rating
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reward -->
+            <div class="space-y-2 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
+                <label class="block text-xs font-bold text-slate-300">Self Reward</label>
+                <div class="flex gap-2">
+                    <input type="text" id="selfRewardInput" placeholder="e.g. Watch 1 Movie" class="flex-1 px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                    <button onclick="saveRewardText()" id="rewardSaveBtn" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition">
+                        Save Reward
+                    </button>
+                </div>
+                <div class="flex items-center justify-between pt-1 text-xs">
+                    <span id="rewardStatusText" class="text-slate-400">Status: Unsaved</span>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="rewardClaimedCheck" onchange="toggleRewardClaim()" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                        <span class="text-slate-300 font-bold">Claim Reward</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- REASON OF FAILURE SECTION (Conditional if < 100%) -->
+        <div id="failureReasonCard" class="glass-card p-5 rounded-3xl space-y-2 border border-rose-500/30 hidden">
+            <h2 class="text-sm font-bold text-rose-400 flex items-center space-x-2">
+                <span>⚠️</span><span>Reason of Failure</span>
+            </h2>
+            <p class="text-[11px] text-slate-400">Since tasks are not 100% completed, please note the reason:</p>
+            <textarea id="failureReasonInput" placeholder="Why couldn't you fully complete 100% of the tasks today?" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white h-20 resize-none"></textarea>
+        </div>
+
+        <!-- COMPLETION CIRCLE & ACTIONS -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col items-center space-y-4 border border-indigo-500/20">
+            <div class="relative w-24 h-24 flex items-center justify-center">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 88 88">
+                    <circle cx="44" cy="44" r="36" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent"></circle>
+                    <circle id="completionCircleRing" cx="44" cy="44" r="36" stroke="currentColor" stroke-width="8" class="text-indigo-500 transition-all duration-500" fill="transparent" stroke-dasharray="226.19" stroke-dashoffset="226.19" stroke-linecap="round"></circle>
+                </svg>
+                <div class="absolute flex flex-col items-center">
+                    <span id="completionPercentText" class="text-xl font-black text-white">0%</span>
+                </div>
+            </div>
+            <div class="text-center">
+                <h3 class="text-sm font-bold text-white">Main Self Study Tasks Completion</h3>
+                <p class="text-[11px] text-slate-400">Calculated strictly from main self-study task checkboxes</p>
+            </div>
+
+            <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button onclick="saveTodayHistory()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition text-xs flex items-center justify-center space-x-2">
+                    <span>💾 Save Today's History</span>
+                </button>
+                <button onclick="openPreviewModal()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition text-xs flex items-center justify-center space-x-2">
+                    <span>👁️ Preview & Download</span>
+                </button>
+            </div>
+        </div>
+
+        <footer class="text-center text-xs text-slate-500 pt-4">
+            DAILY MASTER TO DO PLANNER © Designed & Developed for Self Study Excellence by Mahinur Rahman
+        </footer>
+    </div>
+
+    <!-- PREVIEW MODAL -->
+    <div id="previewModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 overflow-y-auto">
+        <div class="glass-card w-full max-w-lg p-5 sm:p-7 rounded-3xl space-y-4 border border-indigo-500/30 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 no-print">
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow transition">🖨️ Print / Save PDF</button>
+                </div>
+                <button onclick="closePreviewModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center text-slate-400 text-sm font-bold transition">✕</button>
+            </div>
+
+            <!-- Printable Summary Card -->
+            <div id="printableCard" class="bg-slate-900 p-6 rounded-3xl border border-indigo-500/30 space-y-5 text-slate-100 shadow-xl">
+                <div class="text-center border-b border-slate-800 pb-4">
+                    <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-400">Daily Study Summary</span>
+                    <h2 class="text-xl font-black text-white mt-1">DAILY MASTER TO DO PLANNER</h2>
+                    <p class="text-xs text-indigo-300 font-semibold mt-0.5">Created By Mahinur Rahman</p>
+                    <div class="mt-3 inline-block bg-slate-950 px-4 py-1.5 rounded-xl border border-indigo-500/20">
+                        <p id="prevPreviewName" class="text-sm font-bold text-white"></p>
+                        <p id="prevPreviewMeta" class="text-xs text-indigo-400 font-medium"></p>
+                    </div>
+                </div>
+
+                <!-- Top Metrics Grid -->
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Self Study Hours</span>
+                        <p id="prevPreviewStudy" class="text-sm font-black text-indigo-300 mt-1">0/0h</p>
+                        <span id="prevPreviewStudyTarget" class="text-[10px] text-indigo-400">0% Target</span>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Screen Time</span>
+                        <p id="prevPreviewScreen" class="text-sm font-black text-amber-300 mt-1">0/0h</p>
+                        <span id="prevPreviewScreenStatus" class="text-[10px] text-slate-400">Within limit</span>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Class Hours</span>
+                        <p id="prevPreviewClass" class="text-sm font-black text-emerald-300 mt-1">0h</p>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Self Rating</span>
+                        <p id="prevPreviewRating" class="text-sm font-black text-violet-300 mt-1">N/A</p>
+                    </div>
+                </div>
+
+                <!-- Main Tasks Completed -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1">
+                        <span>📋</span><span>Main Self Study Tasks Completed</span>
+                    </h3>
+                    <div id="prevPreviewTasks" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-2 text-xs text-slate-300">
+                        <!-- Task items -->
+                    </div>
+                </div>
+
+                <!-- Prayers -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1">
+                        <span>🕌</span><span>5 Daily Prayers</span>
+                    </h3>
+                    <div id="prevPreviewPrayers" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 flex flex-wrap gap-2 text-xs">
+                        <!-- prayer badges -->
+                    </div>
+                </div>
+
+                <!-- Exams -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center space-x-1">
+                        <span>✍️</span><span>Exams Scheduled & Marks</span>
+                    </h3>
+                    <div id="prevPreviewExams" class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-2 text-xs text-slate-300">
+                        <!-- exams -->
+                    </div>
+                </div>
+
+                <!-- Failure Reason if applicable -->
+                <div id="prevPreviewFailureContainer" class="space-y-1 hidden bg-rose-950/30 p-3 rounded-2xl border border-rose-500/30">
+                    <h3 class="text-xs font-bold text-rose-400">Reason of Failure:</h3>
+                    <p id="prevPreviewFailureText" class="text-xs text-slate-300 italic"></p>
+                </div>
+
+                <!-- Reward Status -->
+                <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-800 text-xs">
+                    <span class="font-bold text-slate-400">Self Reward Status:</span>
+                    <span id="prevPreviewReward" class="font-bold text-indigo-300">Not Claimed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORY MODAL -->
+    <div id="historyModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 overflow-y-auto">
+        <div class="glass-card w-full max-w-lg p-5 sm:p-7 rounded-3xl space-y-4 border border-indigo-500/30 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-base font-black text-white flex items-center space-x-2">
+                    <span>🕒</span><span>Saved Planner History Archive</span>
+                </h2>
+                <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center text-slate-400 text-sm font-bold transition">✕</button>
+            </div>
+            <div id="historyListContainer" class="space-y-3">
+                <!-- Historic items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE EXAM MARKS MODAL -->
+    <div id="examMarksModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-sm p-6 rounded-3xl space-y-4 border border-indigo-500/30 shadow-2xl">
+            <h3 class="text-sm font-bold text-white">Update Exam Marks</h3>
+            <p id="modalExamTitle" class="text-xs text-indigo-300 font-semibold"></p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Marks Obtained</label>
+                    <input type="number" id="modalObtainedMarks" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Total Marks</label>
+                    <input type="number" id="modalTotalMarks" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white">
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeExamMarksModal()" class="flex-1 py-2.5 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl transition">Cancel</button>
+                <button onclick="saveExamMarksModal()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition">Save Marks</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // APPLICATION STATE
+        let currentUser = null;
+        let authMode = 'signin';
+        let studyGroups = [];
+        let exams = [];
+        let prayers = { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
+        let isHoursLocked = false;
+        let isRatingLocked = false;
+        let rewardSaved = false;
+        let currentEditingExamIndex = null;
+        
+        const QUOTES_DB = [
+            { quote: "Success isn't always about greatness. It's about consistency. Consistent hard work leads to success.", author: "Dwayne Johnson" },
+            { quote: "Talent without working hard is nothing.", author: "Cristiano Ronaldo" },
+            { quote: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs" },
+            { quote: "If you want to shine like a sun, first burn like a sun.", author: "APJ Abdul Kalam" },
+            { quote: "I failed over and over and over again in my life. And that is why I succeed.", author: "Michael Jordan" },
+            { quote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", author: "Aristotle" },
+            { quote: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+            { quote: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" }
+        ];
+
+        // INIT ON LOAD
+        window.addEventListener('DOMContentLoaded', () => {
+            checkPersistedAuth();
+            startBDClock();
+            loadDailyMotivation();
+        });
+
+        // BD CLOCK & QUOTE REFRESH (5:00 AM BD TIME REFRESH)
+        function startBDClock() {
+            setInterval(() => {
+                const now = new Date();
+                const options = { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+                document.getElementById('bdClock').innerText = new Intl.DateTimeFormat('en-US', options).format(now);
+            }, 1000);
+        }
+
+        function loadDailyMotivation() {
+            const now = new Date();
+            // 5:00 AM BD time calculation (UTC+6)
+            const bdTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
+            // If current time is before 5 AM, use previous day's seed
+            if (bdTime.getHours() < 5) {
+                bdTime.setDate(bdTime.getDate() - 1);
+            }
+            const daySeed = bdTime.getFullYear() * 10000 + (bdTime.getMonth() + 1) * 100 + bdTime.getDate();
+            const quoteIndex = Math.abs(daySeed) % QUOTES_DB.length;
+            const q = QUOTES_DB[quoteIndex];
+            document.getElementById('quoteText').innerText = `"${q.quote}"`;
+            document.getElementById('quoteAuthor').innerText = `— ${q.author}`;
+        }
+
+        // AUTHENTICATION LOGIC
+        function switchAuthMode(mode) {
+            authMode = mode;
+            const btnIn = document.getElementById('tabSignIn');
+            const btnUp = document.getElementById('tabSignUp');
+            const nameGrp = document.getElementById('displayNameGroup');
+            const subBtn = document.getElementById('authSubmitBtn');
+
+            if (mode === 'signin') {
+                btnIn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition";
+                btnUp.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+                nameGrp.classList.add('hidden');
+                subBtn.innerText = "Sign In";
+            } else {
+                btnUp.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition";
+                btnIn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+                nameGrp.classList.remove('hidden');
+                subBtn.innerText = "Create Account & Sign In";
+            }
+        }
+
+        function handleAuth(e) {
+            e.preventDefault();
+            const username = document.getElementById('authUsername').value.trim().toLowerCase();
+            const pass = document.getElementById('authPassword').value;
+            const remember = document.getElementById('authRemember').checked;
+            const displayName = document.getElementById('authDisplayName').value.trim() || username;
+
+            let usersDB = JSON.parse(localStorage.getItem('studyTrackerUsers') || '{}');
+
+            if (authMode === 'signup') {
+                if (usersDB[username]) {
+                    alert("Username already exists! Please Sign In.");
+                    switchAuthMode('signin');
+                    return;
+                }
+                usersDB[username] = { pass, displayName };
+                localStorage.setItem('studyTrackerUsers', JSON.stringify(usersDB));
+                alert("Account created successfully! Now signing you in.");
+            } else {
+                if (!usersDB[username] || usersDB[username].pass !== pass) {
+                    alert("Invalid username or password!");
+                    return;
+                }
+            }
+
+            currentUser = { username, displayName: usersDB[username].displayName };
+            if (remember) {
+                localStorage.setItem('studyTrackerActiveUser', JSON.stringify(currentUser));
+            }
+
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('loggedInUserBadge').innerText = currentUser.displayName;
+            
+            loadUserData();
+            calculateCompletion();
+            updateStatsAndHistoryDisplay();
+        }
+
+        function checkPersistedAuth() {
+            const active = localStorage.getItem('studyTrackerActiveUser');
+            if (active) {
+                currentUser = JSON.parse(active);
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('loggedInUserBadge').innerText = currentUser.displayName;
+                loadUserData();
+                calculateCompletion();
+                updateStatsAndHistoryDisplay();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('studyTrackerActiveUser');
+            currentUser = null;
+            location.reload();
+        }
+
+        // USER DATA PERSISTENCE
+        function getUserDataKey() {
+            return `studyTrackerData_${currentUser.username}`;
+        }
+
+        function saveUserData() {
+            if (!currentUser) return;
+            const data = {
+                todoListNumber: document.getElementById('todoListNumber').value,
+                studyGroups,
+                exams,
+                prayers,
+                targetStudyHours: document.getElementById('targetStudyHours').value,
+                actualStudyHours: document.getElementById('actualStudyHours').value,
+                targetScreenHours: document.getElementById('targetScreenHours').value,
+                actualScreenHours: document.getElementById('actualScreenHours').value,
+                classHours: document.getElementById('classHoursInput').value,
+                selfRating: document.getElementById('selfRatingRange').value,
+                isHoursLocked,
+                isRatingLocked,
+                rewardText: document.getElementById('selfRewardInput').value,
+                rewardSaved,
+                rewardClaimed: document.getElementById('rewardClaimedCheck').checked,
+                failureReason: document.getElementById('failureReasonInput').value
+            };
+            localStorage.setItem(getUserDataKey(), JSON.stringify(data));
+        }
+
+        function loadUserData() {
+            if (!currentUser) return;
+            const saved = localStorage.getItem(getUserDataKey());
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                document.getElementById('todoListNumber').value = data.todoListNumber || 1;
+                studyGroups = data.studyGroups || [];
+                exams = data.exams || [];
+                prayers = data.prayers || { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
+                document.getElementById('targetStudyHours').value = data.targetStudyHours || '';
+                document.getElementById('actualStudyHours').value = data.actualStudyHours || '';
+                document.getElementById('targetScreenHours').value = data.targetScreenHours || '';
+                document.getElementById('actualScreenHours').value = data.actualScreenHours || '';
+                document.getElementById('classHoursInput').value = data.classHours || 0;
+                document.getElementById('selfRatingRange').value = data.selfRating || 8;
+                document.getElementById('ratingDisplay').innerText = `${data.selfRating || 8} / 10`;
+                document.getElementById('selfRewardInput').value = data.rewardText || '';
+                rewardSaved = data.rewardSaved || false;
+                document.getElementById('rewardClaimedCheck').checked = data.rewardClaimed || false;
+                document.getElementById('failureReasonInput').value = data.failureReason || '';
+
+                isHoursLocked = data.isHoursLocked || false;
+                if (isHoursLocked) applyLockedHoursState();
+
+                isRatingLocked = data.isRatingLocked || false;
+                if (isRatingLocked) applyLockedRatingState();
+
+                if (rewardSaved) applySavedRewardState();
+
+                renderStudyGroups();
+                renderExams();
+                renderPrayersUI();
+            } catch (e) { console.error(e); }
+        }
+
+        function saveListNumber() { saveUserData(); }
+
+        // STUDY GROUPS & TASKS
+        function addStudyGroup() {
+            const subject = document.getElementById('taskSubject').value.trim();
+            const chapter = document.getElementById('taskChapter').value.trim();
+            const mainTasksRaw = document.getElementById('taskMainTasks').value.trim();
+
+            if (!subject || !chapter || !mainTasksRaw) {
+                alert("Please fill in Subject, Chapter, and Main Tasks.");
+                return;
+            }
+
+            const tasks = mainTasksRaw.split(',').map(t => t.trim()).filter(t => t.length > 0).map(t => ({ text: t, completed: false }));
+
+            studyGroups.push({ subject, chapter, tasks });
+            document.getElementById('taskSubject').value = '';
+            document.getElementById('taskChapter').value = '';
+            document.getElementById('taskMainTasks').value = '';
+
+            renderStudyGroups();
+            calculateCompletion();
+            saveUserData();
+        }
+
+        function renderStudyGroups() {
+            const container = document.getElementById('studyGroupsContainer');
+            container.innerHTML = '';
+            if (studyGroups.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-2">No self-study subjects added today.</p>`;
+                return;
+            }
+
+            studyGroups.forEach((group, gIdx) => {
+                let card = document.createElement('div');
+                card.className = "bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-3";
+                
+                let tasksHtml = '';
+                group.tasks.forEach((task, tIdx) => {
+                    tasksHtml += `
+                        <label class="flex items-center space-x-3 cursor-pointer py-1">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${gIdx}, ${tIdx})" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                            <span class="text-xs text-slate-200 ${task.completed ? 'line-through text-slate-500' : ''}">${task.text}</span>
+                        </label>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">${group.subject}</span>
+                            <h4 class="text-xs font-bold text-white">${group.chapter}</h4>
+                        </div>
+                        <button onclick="deleteStudyGroup(${gIdx})" class="text-slate-500 hover:text-rose-400 text-xs">🗑️</button>
+                    </div>
+                    <div class="space-y-1">${tasksHtml}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleTask(gIdx, tIdx) {
+            studyGroups[gIdx].tasks[tIdx].completed = !studyGroups[gIdx].tasks[tIdx].completed;
+            renderStudyGroups();
+            calculateCompletion();
+            saveUserData();
+        }
+
+        function deleteStudyGroup(gIdx) {
+            studyGroups.splice(gIdx, 1);
+            renderStudyGroups();
+            calculateCompletion();
+            saveUserData();
+        }
+
+        // EXAMS & MARKS
+        function addExamEntry() {
+            const examName = document.getElementById('examName').value.trim();
+            const subject = document.getElementById('examSubject').value.trim();
+            const topic = document.getElementById('examTopic').value.trim();
+            const obtained = document.getElementById('examMarksObtained').value.trim();
+            const total = document.getElementById('examTotalMarks').value.trim();
+
+            if (!examName || !subject || !total) {
+                alert("Please enter Exam Name, Subject, and Total Marks.");
+                return;
+            }
+
+            exams.push({
+                name: examName,
+                subject,
+                topic,
+                obtained: obtained !== '' ? Number(obtained) : null,
+                total: Number(total),
+                completed: false
+            });
+
+            document.getElementById('examName').value = '';
+            document.getElementById('examSubject').value = '';
+            document.getElementById('examTopic').value = '';
+            document.getElementById('examMarksObtained').value = '';
+            document.getElementById('examTotalMarks').value = '';
+
+            renderExams();
+            saveUserData();
+        }
+
+        function renderExams() {
+            const container = document.getElementById('examsContainer');
+            container.innerHTML = '';
+            if (exams.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-2">No exams scheduled today.</p>`;
+                return;
+            }
+
+            exams.forEach((exam, idx) => {
+                let card = document.createElement('div');
+                card.className = "bg-slate-900/60 p-3 rounded-2xl border border-slate-800 flex items-center justify-between";
+                
+                let marksText = exam.obtained !== null ? `${exam.obtained} / ${exam.total}` : `Pending / ${exam.total}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" ${exam.completed ? 'checked' : ''} onchange="toggleExamCheck(${idx})" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                        <div>
+                            <span class="text-[10px] font-bold text-rose-400 uppercase">${exam.subject}</span>
+                            <h4 class="text-xs font-bold text-white">${exam.name} (${exam.topic})</h4>
+                            <p class="text-[11px] text-slate-400">Marks: ${marksText}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openExamMarksModal(${idx})" class="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-[10px] font-bold rounded-lg transition border border-indigo-500/30">Update Marks</button>
+                        <button onclick="deleteExam(${idx})" class="text-slate-500 hover:text-rose-400 text-xs">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleExamCheck(idx) {
+            exams[idx].completed = !exams[idx].completed;
+            renderExams();
+            saveUserData();
+        }
+
+        function deleteExam(idx) {
+            exams.splice(idx, 1);
+            renderExams();
+            saveUserData();
+        }
+
+        function openExamMarksModal(idx) {
+            currentEditingExamIndex = idx;
+            const exam = exams[idx];
+            document.getElementById('modalExamTitle').innerText = `${exam.name} (${exam.subject})`;
+            document.getElementById('modalObtainedMarks').value = exam.obtained !== null ? exam.obtained : '';
+            document.getElementById('modalTotalMarks').value = exam.total;
+            document.getElementById('examMarksModal').classList.remove('hidden');
+        }
+
+        function closeExamMarksModal() {
+            document.getElementById('examMarksModal').classList.add('hidden');
+            currentEditingExamIndex = null;
+        }
+
+        function saveExamMarksModal() {
+            if (currentEditingExamIndex === null) return;
+            const obtained = document.getElementById('modalObtainedMarks').value.trim();
+            const total = document.getElementById('modalTotalMarks').value.trim();
+
+            if (!total) {
+                alert("Total marks is required.");
+                return;
+            }
+
+            exams[currentEditingExamIndex].obtained = obtained !== '' ? Number(obtained) : null;
+            exams[currentEditingExamIndex].total = Number(total);
+
+            closeExamMarksModal();
+            renderExams();
+            saveUserData();
+        }
+
+        // HOURS LOCK & SCREEN TIME ALERTS
+        function toggleHoursLock() {
+            if (!isHoursLocked) {
+                const targetStudy = document.getElementById('targetStudyHours').value;
+                const targetScreen = document.getElementById('targetScreenHours').value;
+                if (!targetStudy || !targetScreen) {
+                    alert("Please enter Target Study Hours and Screen Time Limit before locking.");
+                    return;
+                }
+                isHoursLocked = true;
+                applyLockedHoursState();
+            } else {
+                isHoursLocked = false;
+                applyUnlockedHoursState();
+            }
+            saveUserData();
+        }
+
+        function applyLockedHoursState() {
+            document.getElementById('targetStudyHours').disabled = true;
+            document.getElementById('targetScreenHours').disabled = true;
+            document.getElementById('actualStudyHours').disabled = false;
+            document.getElementById('actualScreenHours').disabled = false;
+            document.getElementById('actualStudyHours').classList.remove('opacity-60');
+            document.getElementById('actualScreenHours').classList.remove('opacity-60');
+            document.getElementById('studyModeIndicator').innerText = "Actual Mode";
+            
+            const btn = document.getElementById('hoursActionBtn');
+            btn.innerText = "💾 Save Actual Hours";
+            btn.className = "w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition shadow-lg";
+        }
+
+        function applyUnlockedHoursState() {
+            document.getElementById('targetStudyHours').disabled = false;
+            document.getElementById('targetScreenHours').disabled = false;
+            document.getElementById('actualStudyHours').disabled = true;
+            document.getElementById('actualScreenHours').disabled = true;
+            document.getElementById('actualStudyHours').classList.add('opacity-60');
+            document.getElementById('actualScreenHours').classList.add('opacity-60');
+            document.getElementById('studyModeIndicator').innerText = "Target Mode";
+            
+            const btn = document.getElementById('hoursActionBtn');
+            btn.innerText = "🔒 Lock Target Hours";
+            btn.className = "w-full py-3 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition shadow-lg";
+        }
+
+        // Screen Time Alert Watcher
+        document.getElementById('actualScreenHours').addEventListener('input', updateScreenAlertBadge);
+        document.getElementById('targetScreenHours').addEventListener('input', updateScreenAlertBadge);
+
+        function updateScreenAlertBadge() {
+            const target = parseFloat(document.getElementById('targetScreenHours').value) || 0;
+            const actual = parseFloat(document.getElementById('actualScreenHours').value) || 0;
+            const alertBadge = document.getElementById('screenStatusAlert');
+
+            if (actual === 0 && target === 0) {
+                alertBadge.innerText = "Not Logged";
+                alertBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold";
+                return;
+            }
+
+            if (actual > target) {
+                const diff = (actual - target).toFixed(1);
+                alertBadge.innerText = `Exceeded by ${diff} hrs`;
+                alertBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30";
+            } else if (actual < target) {
+                const diff = (target - actual).toFixed(1);
+                alertBadge.innerText = `${diff} hrs less than limit`;
+                alertBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30";
+            } else {
+                alertBadge.innerText = `Exact limit reached`;
+                alertBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30";
+            }
+            saveUserData();
+        }
+
+        document.getElementById('targetStudyHours').addEventListener('input', saveUserData);
+        document.getElementById('actualStudyHours').addEventListener('input', saveUserData);
+
+        // PRAYERS
+        function togglePrayer(key) {
+            prayers[key] = !prayers[key];
+            renderPrayersUI();
+            saveUserData();
+        }
+
+        function renderPrayersUI() {
+            const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+            keys.forEach(k => {
+                const btn = document.getElementById(`prayer${k.charAt(0).toUpperCase() + k.slice(1)}`);
+                const ind = document.getElementById(`ind${k.charAt(0).toUpperCase() + k.slice(1)}`);
+                if (prayers[k]) {
+                    btn.className = "py-2.5 px-1 bg-emerald-600/20 text-emerald-300 text-[11px] font-bold rounded-xl border border-emerald-500/40 transition flex flex-col items-center shadow";
+                    ind.innerText = "✓";
+                } else {
+                    btn.className = "py-2.5 px-1 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-[11px] font-bold rounded-xl border border-slate-800 transition flex flex-col items-center";
+                    ind.innerText = "⚪";
+                }
+            });
+        }
+
+        // SELF RATING & REWARD
+        function updateRatingVal(val) {
+            document.getElementById('ratingDisplay').innerText = `${val} / 10`;
+            saveUserData();
+        }
+
+        function toggleRatingLock() {
+            isRatingLocked = !isRatingLocked;
+            if (isRatingLocked) applyLockedRatingState();
+            else applyUnlockedRatingState();
+            saveUserData();
+        }
+
+        function applyLockedRatingState() {
+            document.getElementById('selfRatingRange').disabled = true;
+            document.getElementById('ratingLockStatus').innerText = "Status: Locked";
+            const btn = document.getElementById('ratingLockBtn');
+            btn.innerText = "🔓 Unlock Rating";
+            btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition";
+        }
+
+        function applyUnlockedRatingState() {
+            document.getElementById('selfRatingRange').disabled = false;
+            document.getElementById('ratingLockStatus').innerText = "Status: Unlocked (Shows N/A in preview unless locked)";
+            const btn = document.getElementById('ratingLockBtn');
+            btn.innerText = "🔒 Lock Rating";
+            btn.className = "px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold rounded-lg transition";
+        }
+
+        function saveRewardText() {
+            const txt = document.getElementById('selfRewardInput').value.trim();
+            if (!txt) {
+                alert("Please enter a self reward.");
+                return;
+            }
+            rewardSaved = true;
+            applySavedRewardState();
+            saveUserData();
+            alert("Self reward saved successfully!");
+        }
+
+        function applySavedRewardState() {
+            document.getElementById('rewardStatusText').innerText = "Status: Saved";
+            document.getElementById('rewardSaveBtn').innerText = "Edit Reward";
+        }
+
+        function toggleRewardClaim() {
+            saveUserData();
+        }
+
+        document.getElementById('failureReasonInput').addEventListener('input', saveUserData);
+
+        // COMPLETION PERCENTAGE CALCULATION (MAIN TASKS ONLY)
+        function calculateCompletion() {
+            let totalMainTasks = 0;
+            let completedMainTasks = 0;
+
+            studyGroups.forEach(g => {
+                g.tasks.forEach(t => {
+                    totalMainTasks++;
+                    if (t.completed) completedMainTasks++;
+                });
+            });
+
+            let percent = totalMainTasks === 0 ? 0 : Math.round((completedMainTasks / totalMainTasks) * 100);
+
+            document.getElementById('completionPercentText').innerText = `${percent}%`;
+            
+            // Update SVG Ring (r = 36, circumference = 226.19)
+            const circumference = 226.19;
+            const offset = circumference - (percent / 100) * circumference;
+            document.getElementById('completionCircleRing').style.strokeDashoffset = offset;
+
+            const failureCard = document.getElementById('failureReasonCard');
+            if (percent === 100 || totalMainTasks === 0) {
+                failureCard.classList.add('hidden');
+            } else {
+                failureCard.classList.remove('hidden');
+            }
+
+            return percent;
+        }
+
+        // SAVE TODAY'S HISTORY ARCHIVE
+        function saveTodayHistory() {
+            if (!currentUser) return;
+            const historyKey = `studyTrackerHistory_${currentUser.username}`;
+            let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
+
+            const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            const listNo = document.getElementById('todoListNumber').value;
+            const percent = calculateCompletion();
+            const rating = isRatingLocked ? document.getElementById('selfRatingRange').value : 'N/A';
+            const studyActual = document.getElementById('actualStudyHours').value || '0';
+            const studyTarget = document.getElementById('targetStudyHours').value || '0';
+            const screenActual = document.getElementById('actualScreenHours').value || '0';
+            const screenTarget = document.getElementById('targetScreenHours').value || '0';
+
+            const prayerCount = Object.values(prayers).filter(Boolean).length;
+
+            const entry = {
+                date: todayStr,
+                listNo,
+                percent,
+                rating,
+                studyActual,
+                studyTarget,
+                screenActual,
+                screenTarget,
+                prayerCount,
+                studyGroups: JSON.parse(JSON.stringify(studyGroups)),
+                exams: JSON.parse(JSON.stringify(exams))
+            };
+
+            // Avoid duplicate today entry, replace or push
+            historyList = historyList.filter(h => h.date !== todayStr);
+            historyList.unshift(entry);
+            localStorage.setItem(historyKey, JSON.stringify(historyList));
+
+            updateStatsAndHistoryDisplay();
+            alert("Today's planner history saved successfully!");
+        }
+
+        function updateStatsAndHistoryDisplay() {
+            if (!currentUser) return;
+            const historyKey = `studyTrackerHistory_${currentUser.username}`;
+            let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
+
+            document.getElementById('historyCountText').innerText = `${historyList.length} Days Saved`;
+
+            // Calculate previous 7 days avg self study and screen time
+            let totalStudy = 0;
+            let totalScreen = 0;
+            let count = Math.min(7, historyList.length);
+
+            if (count > 0) {
+                for (let i = 0; i < count; i++) {
+                    totalStudy += parseFloat(historyList[i].studyActual) || 0;
+                    totalScreen += parseFloat(historyList[i].screenActual) || 0;
+                }
+                document.getElementById('statAvgSelfStudy').innerText = `${(totalStudy / count).toFixed(1)} hrs/day`;
+                document.getElementById('statAvgScreenTime').innerText = `${(totalScreen / count).toFixed(1)} hrs/day`;
+            } else {
+                document.getElementById('statAvgSelfStudy').innerText = `0.0 hrs/day`;
+                document.getElementById('statAvgScreenTime').innerText = `0.0 hrs/day`;
+            }
+        }
+
+        // HISTORY MODAL
+        function openHistoryModal() {
+            const container = document.getElementById('historyListContainer');
+            container.innerHTML = '';
+            const historyKey = `studyTrackerHistory_${currentUser.username}`;
+            let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
+
+            if (historyList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No saved history records found yet.</p>`;
+            } else {
+                historyList.forEach(item => {
+                    let card = document.createElement('div');
+                    card.className = "bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-2";
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-indigo-400">To-Do List #${item.listNo} (${item.date})</span>
+                            <span class="text-xs font-extrabold text-emerald-400">${item.percent}% Complete</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-[11px] text-slate-300">
+                            <span class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">Self Study: ${item.studyActual}/${item.studyTarget}h</span>
+                            <span class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">Screen: ${item.screenActual}/${item.screenTarget}h</span>
+                            <span class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">Prayers: ${item.prayerCount}/5</span>
+                            <span class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">Rating: ${item.rating}/10</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // PREVIEW MODAL
+        function openPreviewModal() {
+            document.getElementById('prevPreviewName').innerText = currentUser.displayName;
+            document.getElementById('prevPreviewMeta').innerText = `To-Do List No: #${document.getElementById('todoListNumber').value} • ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+            const sTarget = document.getElementById('targetStudyHours').value || '0';
+            const sActual = document.getElementById('actualStudyHours').value || '0';
+            const sPercent = sTarget > 0 ? Math.round((sActual / sTarget) * 100) : 0;
+            document.getElementById('prevPreviewStudy').innerText = `${sActual}/${sTarget}h`;
+            document.getElementById('prevPreviewStudyTarget').innerText = `${sPercent}% Target`;
+
+            const scTarget = document.getElementById('targetScreenHours').value || '0';
+            const scActual = document.getElementById('actualScreenHours').value || '0';
+            document.getElementById('prevPreviewScreen').innerText = `${scActual}/${scTarget}h`;
+            
+            const scBadge = document.getElementById('prevPreviewScreenStatus');
+            if (parseFloat(scActual) > parseFloat(scTarget)) {
+                scBadge.innerText = `Exceeded by ${(scActual - scTarget).toFixed(1)} hrs`;
+                scBadge.className = "text-[10px] text-rose-400 font-bold";
+            } else if (parseFloat(scActual) < parseFloat(scTarget)) {
+                scBadge.innerText = `${(scTarget - scActual).toFixed(1)} hrs less than limit`;
+                scBadge.className = "text-[10px] text-emerald-400 font-bold";
+            } else {
+                scBadge.innerText = `Exact limit reached`;
+                scBadge.className = "text-[10px] text-indigo-400 font-bold";
+            }
+
+            document.getElementById('prevPreviewClass').innerText = `${document.getElementById('classHoursInput').value || 0}h`;
+            document.getElementById('prevPreviewRating').innerText = isRatingLocked ? `${document.getElementById('selfRatingRange').value}/10` : 'N/A';
+
+            // Tasks
+            const tasksContainer = document.getElementById('prevPreviewTasks');
+            tasksContainer.innerHTML = '';
+            if (studyGroups.length === 0) {
+                tasksContainer.innerHTML = `<p class="text-xs text-slate-500">No study tasks added today.</p>`;
+            } else {
+                studyGroups.forEach(g => {
+                    let subDiv = document.createElement('div');
+                    let listItems = g.tasks.map(t => `<div class="ml-2 ${t.completed ? 'line-through text-slate-500' : ''}">${t.completed ? '✓' : '○'} ${t.text}</div>`).join('');
+                    subDiv.innerHTML = `<p class="font-bold text-indigo-300 mt-1">${g.subject} - ${g.chapter}</p>${listItems}`;
+                    tasksContainer.appendChild(subDiv);
+                });
+            }
+
+            // Prayers
+            const prayersContainer = document.getElementById('prevPreviewPrayers');
+            prayersContainer.innerHTML = '';
+            const prayerNames = { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' };
+            Object.keys(prayerNames).forEach(k => {
+                let span = document.createElement('span');
+                span.className = prayers[k] ? "text-emerald-400 font-bold" : "text-slate-500";
+                span.innerText = `${prayerNames[k]}${prayers[k] ? '✓' : ''}`;
+                prayersContainer.appendChild(span);
+            });
+
+            // Exams
+            const examsContainer = document.getElementById('prevPreviewExams');
+            examsContainer.innerHTML = '';
+            if (exams.length === 0) {
+                examsContainer.innerHTML = `<p class="text-xs text-slate-500">No exams scheduled today.</p>`;
+            } else {
+                exams.forEach(ex => {
+                    let div = document.createElement('div');
+                    let marksStr = ex.obtained !== null ? `${ex.obtained} / ${ex.total}` : `Pending / ${ex.total}`;
+                    div.innerHTML = `<p class="font-bold text-rose-300">${ex.name} (${ex.subject}) — ${ex.topic}</p><p class="text-[11px] text-slate-400">Score: ${marksStr}</p>`;
+                    examsContainer.appendChild(div);
+                });
+            }
+
+            // Failure reason
+            const failureContainer = document.getElementById('prevPreviewFailureContainer');
+            const failureText = document.getElementById('failureReasonInput').value.trim();
+            const percent = calculateCompletion();
+            if (percent < 100 && failureText) {
+                document.getElementById('prevPreviewFailureText').innerText = failureText;
+                failureContainer.classList.remove('hidden');
+            } else {
+                failureContainer.classList.add('hidden');
+            }
+
+            // Reward
+            const isClaimed = document.getElementById('rewardClaimedCheck').checked;
+            const rewardVal = document.getElementById('selfRewardInput').value.trim();
+            const rewardStatus = document.getElementById('prevPreviewReward');
+            if (!rewardVal) {
+                rewardStatus.innerText = "No Reward Set";
+            } else if (isClaimed) {
+                rewardStatus.innerText = `Claimed: ${rewardVal}`;
+                rewardStatus.className = "font-bold text-emerald-400";
+            } else {
+                rewardStatus.innerText = `Not Claimed (${rewardVal})`;
+                rewardStatus.className = "font-bold text-amber-400";
+            }
+
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```
