@@ -20,12 +20,22 @@
             body * { visibility: hidden; }
             #previewModal, #printableCard, #printableCard * { visibility: visible; }
             #previewModal { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
-            #printableCard { background: white !important; color: black !important; border: none !important; shadow: none !important; }
+            #printableCard { background: white !important; color: black !important; border: none !important; box-shadow: none !important; }
             .no-print { display: none !important; }
         }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-3 sm:p-6">
+
+    <!-- AUTO RESET NOTIFICATION TOAST -->
+    <div id="autoResetToast" class="fixed top-5 right-5 z-50 hidden max-w-sm bg-emerald-600/90 text-white p-4 rounded-2xl shadow-2xl backdrop-blur-md border border-emerald-400/40 flex items-start space-x-3 transition-all duration-500">
+        <span class="text-xl">✨</span>
+        <div class="flex-1">
+            <h4 class="text-xs font-bold uppercase tracking-wider">New Day Started (5:00 AM BD)</h4>
+            <p id="autoResetToastMsg" class="text-xs text-emerald-100 mt-0.5">Yesterday's progress was automatically archived into history, and your planner has been reset for today!</p>
+        </div>
+        <button onclick="dismissAutoResetToast()" class="text-white/80 hover:text-white font-bold text-xs">✕</button>
+    </div>
 
     <!-- AUTHENTICATION SCREEN -->
     <div id="authScreen" class="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
@@ -348,7 +358,7 @@
             </div>
 
             <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <button onclick="saveTodayHistory()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition text-xs flex items-center justify-center space-x-2">
+                <button onclick="saveTodayHistory(true)" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition text-xs flex items-center justify-center space-x-2">
                     <span>💾 Save Today's History</span>
                 </button>
                 <button onclick="openPreviewModal()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition text-xs flex items-center justify-center space-x-2">
@@ -499,6 +509,7 @@
         let isRatingLocked = false;
         let rewardSaved = false;
         let currentEditingExamIndex = null;
+        let lastResetDateStr = null; // Keeps track of 5:00 AM BD day string
         
         const QUOTES_DB = [
             { quote: "Success isn't always about greatness. It's about consistency. Consistent hard work leads to success.", author: "Dwayne Johnson" },
@@ -518,25 +529,38 @@
             loadDailyMotivation();
         });
 
-        // BD CLOCK & QUOTE REFRESH (5:00 AM BD TIME REFRESH)
+        // GET BD 5:00 AM DAY KEY (UTC+6)
+        function getBDDayKey(dateObj = new Date()) {
+            const bdTime = new Date(dateObj.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
+            // If before 5 AM BD time, it belongs to the previous day cycle
+            if (bdTime.getHours() < 5) {
+                bdTime.setDate(bdTime.getDate() - 1);
+            }
+            return `${bdTime.getFullYear()}-${String(bdTime.getMonth() + 1).padStart(2, '0')}-${String(bdTime.getDate()).padStart(2, '0')}`;
+        }
+
+        // BD CLOCK & AUTO RESET CHECKER
         function startBDClock() {
             setInterval(() => {
                 const now = new Date();
                 const options = { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
                 document.getElementById('bdClock').innerText = new Intl.DateTimeFormat('en-US', options).format(now);
+
+                // Live check if 5:00 AM cutoff day has crossed while page is open
+                if (currentUser && lastResetDateStr) {
+                    const currentBDKey = getBDDayKey(now);
+                    if (currentBDKey !== lastResetDateStr) {
+                        performAutoDailyReset(currentBDKey);
+                    }
+                }
             }, 1000);
         }
 
         function loadDailyMotivation() {
-            const now = new Date();
-            // 5:00 AM BD time calculation (UTC+6)
-            const bdTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
-            // If current time is before 5 AM, use previous day's seed
-            if (bdTime.getHours() < 5) {
-                bdTime.setDate(bdTime.getDate() - 1);
-            }
-            const daySeed = bdTime.getFullYear() * 10000 + (bdTime.getMonth() + 1) * 100 + bdTime.getDate();
-            const quoteIndex = Math.abs(daySeed) % QUOTES_DB.length;
+            const bdKey = getBDDayKey();
+            // Numeric seed from BD day key
+            const seed = parseInt(bdKey.replace(/-/g, ''), 10);
+            const quoteIndex = seed % QUOTES_DB.length;
             const q = QUOTES_DB[quoteIndex];
             document.getElementById('quoteText').innerText = `"${q.quote}"`;
             document.getElementById('quoteAuthor').innerText = `— ${q.author}`;
@@ -598,6 +622,7 @@
             document.getElementById('loggedInUserBadge').innerText = currentUser.displayName;
             
             loadUserData();
+            checkAndTriggerDailyReset();
             calculateCompletion();
             updateStatsAndHistoryDisplay();
         }
@@ -610,6 +635,7 @@
                 document.getElementById('mainApp').classList.remove('hidden');
                 document.getElementById('loggedInUserBadge').innerText = currentUser.displayName;
                 loadUserData();
+                checkAndTriggerDailyReset();
                 calculateCompletion();
                 updateStatsAndHistoryDisplay();
             }
@@ -621,7 +647,7 @@
             location.reload();
         }
 
-        // USER DATA PERSISTENCE
+        // USER DATA PERSISTENCE & AUTO-RESET LOGIC
         function getUserDataKey() {
             return `studyTrackerData_${currentUser.username}`;
         }
@@ -629,6 +655,7 @@
         function saveUserData() {
             if (!currentUser) return;
             const data = {
+                lastResetDateStr,
                 todoListNumber: document.getElementById('todoListNumber').value,
                 studyGroups,
                 exams,
@@ -652,9 +679,13 @@
         function loadUserData() {
             if (!currentUser) return;
             const saved = localStorage.getItem(getUserDataKey());
-            if (!saved) return;
+            if (!saved) {
+                lastResetDateStr = getBDDayKey();
+                return;
+            }
             try {
                 const data = JSON.parse(saved);
+                lastResetDateStr = data.lastResetDateStr || getBDDayKey();
                 document.getElementById('todoListNumber').value = data.todoListNumber || 1;
                 studyGroups = data.studyGroups || [];
                 exams = data.exams || [];
@@ -683,6 +714,66 @@
                 renderExams();
                 renderPrayersUI();
             } catch (e) { console.error(e); }
+        }
+
+        // CHECK & AUTO-RESET AT 5:00 AM BD TIME
+        function checkAndTriggerDailyReset() {
+            const currentBDKey = getBDDayKey();
+            if (lastResetDateStr && lastResetDateStr !== currentBDKey) {
+                performAutoDailyReset(currentBDKey);
+            }
+        }
+
+        function performAutoDailyReset(newBDKey) {
+            // 1. Save current active day snapshot to permanent history archive automatically
+            saveTodayHistory(false); // false = silent auto-archive
+
+            // 2. Increment To-Do List Number
+            let currentListNo = parseInt(document.getElementById('todoListNumber').value) || 1;
+            document.getElementById('todoListNumber').value = currentListNo + 1;
+
+            // 3. Reset daily task checkboxes, actual study/screen hours, prayers, failure reason
+            studyGroups.forEach(g => {
+                g.tasks.forEach(t => t.completed = false);
+            });
+            
+            prayers = { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
+            
+            document.getElementById('actualStudyHours').value = '';
+            document.getElementById('actualScreenHours').value = '';
+            document.getElementById('classHoursInput').value = '0';
+            document.getElementById('failureReasonInput').value = '';
+            document.getElementById('rewardClaimedCheck').checked = false;
+
+            // Reset hours lock & rating lock for fresh inputs
+            isHoursLocked = false;
+            applyUnlockedHoursState();
+            isRatingLocked = false;
+            applyUnlockedRatingState();
+
+            lastResetDateStr = newBDKey;
+
+            // Save refreshed state
+            renderStudyGroups();
+            renderExams();
+            renderPrayersUI();
+            calculateCompletion();
+            saveUserData();
+            updateStatsAndHistoryDisplay();
+            loadDailyMotivation();
+
+            // 4. Show Notification Toast
+            showAutoResetToast();
+        }
+
+        function showAutoResetToast() {
+            const toast = document.getElementById('autoResetToast');
+            toast.classList.remove('hidden');
+            setTimeout(() => { dismissAutoResetToast(); }, 7000);
+        }
+
+        function dismissAutoResetToast() {
+            document.getElementById('autoResetToast').classList.add('hidden');
         }
 
         function saveListNumber() { saveUserData(); }
@@ -1053,7 +1144,7 @@
         }
 
         // SAVE TODAY'S HISTORY ARCHIVE
-        function saveTodayHistory() {
+        function saveTodayHistory(showAlert = true) {
             if (!currentUser) return;
             const historyKey = `studyTrackerHistory_${currentUser.username}`;
             let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
@@ -1089,7 +1180,9 @@
             localStorage.setItem(historyKey, JSON.stringify(historyList));
 
             updateStatsAndHistoryDisplay();
-            alert("Today's planner history saved successfully!");
+            if (showAlert) {
+                alert("Today's planner history saved successfully!");
+            }
         }
 
         function updateStatsAndHistoryDisplay() {
