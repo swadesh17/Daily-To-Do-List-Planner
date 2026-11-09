@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,36 +153,11 @@
         <!-- DAILY MOTIVATION QUOTE -->
         <div class="glass-card p-5 rounded-3xl relative overflow-hidden border border-violet-500/20">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-violet-400">Daily Motivation</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-violet-400">Daily Motivation (Refreshes Daily at 5:00 AM BD Time)</span>
                 <span class="text-base">💡</span>
             </div>
             <p id="quoteText" class="text-sm italic font-medium text-slate-200">"Loading motivation..."</p>
             <p id="quoteAuthor" class="text-xs font-bold text-violet-300 mt-2 text-right">— Author</p>
-        </div>
-
-        <!-- OPTIONAL SELF STUDY BLOCKS SYSTEM -->
-        <div class="glass-card p-5 rounded-3xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
-                    <span>🧱</span><span>Optional Self Study Blocks</span>
-                </h2>
-                <span class="text-[11px] text-slate-400">Auto-syncs to actual study hours</span>
-            </div>
-            
-            <div class="space-y-3 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/80">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input type="text" id="blockTimeRange" placeholder="Time Range (e.g. 6AM-8AM)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
-                    <input type="number" id="blockTargetHours" step="0.5" placeholder="Target Hours (e.g. 2)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
-                    <input type="text" id="blockMaxBreaks" placeholder="Max Break (e.g. 15m)" class="px-3 py-2.5 rounded-xl glass-input text-xs text-white">
-                </div>
-                <button onclick="addStudyBlock()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-md">
-                    + Add Study Block
-                </button>
-            </div>
-
-            <div id="studyBlocksContainer" class="space-y-2">
-                <!-- Dynamically added blocks table -->
-            </div>
         </div>
 
         <!-- SELF STUDY TO DO LIST SECTION -->
@@ -403,7 +380,7 @@
             <textarea id="failureReasonInput" placeholder="Why couldn't you fully complete 100% of the tasks today?" class="w-full px-3 py-2.5 rounded-xl glass-input text-xs text-white h-20 resize-none"></textarea>
         </div>
 
-        <!-- COMPLETION CIRCLE & PREVIEW ACTION -->
+        <!-- COMPLETION CIRCLE & ACTIONS -->
         <div class="glass-card p-6 rounded-3xl flex flex-col items-center space-y-4 border border-indigo-500/20">
             <div class="relative w-24 h-24 flex items-center justify-center">
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 88 88">
@@ -415,11 +392,14 @@
                 </div>
             </div>
             <div class="text-center">
-                <h3 class="text-sm font-bold text-white">Completed</h3>
+                <h3 class="text-sm font-bold text-white">Main Self Study Tasks</h3>
                 <p class="text-[11px] text-slate-400">Calculated strictly from main self-study task checkboxes</p>
             </div>
 
-            <div class="w-full pt-2">
+            <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button onclick="saveTodayHistory(true)" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition text-xs flex items-center justify-center space-x-2">
+                    <span>💾 Save Today's History</span>
+                </button>
                 <button onclick="openPreviewModal()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition text-xs flex items-center justify-center space-x-2">
                     <span>👁️ Preview & Download</span>
                 </button>
@@ -507,21 +487,6 @@
         </div>
     </div>
 
-    <!-- PUBLIC PROFILE MODAL -->
-    <div id="profileModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 overflow-y-auto">
-        <div class="glass-card w-full max-w-lg p-5 sm:p-7 rounded-3xl space-y-4 border border-indigo-500/30 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h2 id="modalProfileTitle" class="text-base font-black text-white flex items-center space-x-2">
-                    <span>👤</span><span>User Profile</span>
-                </h2>
-                <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center text-slate-400 text-sm font-bold transition">✕</button>
-            </div>
-            <div id="modalProfileContent" class="space-y-4 text-xs">
-                <!-- Dynamically populated profile details -->
-            </div>
-        </div>
-    </div>
-
     <!-- HISTORY MODAL -->
     <div id="historyModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 overflow-y-auto">
         <div class="glass-card w-full max-w-lg p-5 sm:p-7 rounded-3xl space-y-4 border border-indigo-500/30 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -599,7 +564,6 @@
     <script>
         let currentUser = null;
         let authMode = 'signin';
-        let studyBlocks = [];
         let studyGroups = [];
         let exams = [];
         let prayers = { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
@@ -611,17 +575,14 @@
         let activePillar = 'daily';
         
         const BADGES_DEF = [
-            { id: 'early', name: 'Early Bird', icon: '🌅', desc: 'Saved 2h+ before 8:00 AM' },
-            { id: 'owl', name: 'Night Owl', icon: '🦉', desc: 'Saved 2h+ after 10:00 PM' },
-            { id: 'iron', name: 'Iron Will', icon: '🛡️', desc: 'Daily Focus Ratio > 5.0' },
+            { id: 'early', name: 'Early Riser', icon: '🌅', desc: 'Study logged early' },
+            { id: 'owl', name: 'Night Owl', icon: '🦉', desc: 'Late night session' },
             { id: 'titan', name: 'Focus Titan', icon: '⚡', desc: 'Ratio > 5.0 & 50+ hrs' },
-            { id: 'bedrock', name: 'Bedrock', icon: '🧱', desc: '10+ hrs in a day' },
-            { id: 'bulwark', name: 'Bulwark', icon: '🛡️', desc: '12+ hrs in a day' },
-            { id: 'colossus', name: 'Colossus', icon: '🗿', desc: '14+ hrs in a day' },
-            { id: 'monolith', name: 'Monolith', icon: '⛰️', desc: '17+ hrs in a day' },
-            { id: 'century', name: 'Century Seeker', icon: '🥉', desc: '100+ lifetime study hrs' },
-            { id: 'unstoppable', name: 'Unstoppable Force', icon: '🥈', desc: '500+ lifetime study hrs' },
-            { id: 'thousand', name: 'Thousand Club', icon: '🥇', desc: '1,000+ lifetime study hrs' }
+            { id: 'marathon', name: 'Marathon', icon: '🏃‍♂️', desc: '8+ hrs in one day' },
+            { id: 'iron', name: 'Iron Will', icon: '🛡️', desc: 'Daily Focus Ratio > 5.0' },
+            { id: 'century', name: '100 Hours', icon: '🥉', desc: '100+ lifetime study hrs' },
+            { id: 'fivehundred', name: '500 Hours', icon: '🥈', desc: '500+ lifetime study hrs' },
+            { id: 'thousand', name: '1,000 Hours', icon: '🥇', desc: '1,000+ lifetime study hrs' }
         ];
 
         const QUOTES_DB = [
@@ -788,6 +749,7 @@
             return `studyTrackerData_${currentUser.username}`;
         }
 
+        // CALCULATE LIFETIME STUDY & UNIQUE BADGES CLEANLY FROM DEDUPLICATED HISTORY
         function computeLifetimeMetrics() {
             const historyKey = `studyTrackerHistory_${currentUser.username}`;
             let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
@@ -796,6 +758,7 @@
             const screenActual = parseFloat(document.getElementById('actualScreenHours').value) || 0;
             const focusRatio = screenActual > 0 ? (studyActual / screenActual).toFixed(2) : studyActual.toFixed(2);
 
+            // Build map of unique date entries to prevent double counting on re-saves
             const dateMap = new Map();
             historyList.forEach(item => {
                 if (item.dateKey) {
@@ -805,22 +768,15 @@
                 }
             });
 
+            // Add or overwrite today's live stats into the map
             const todayKey = getBDDayKey();
             const todayDateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
             
             const todayBadges = [];
-            const nowBD = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
-            const currentHour = nowBD.getHours();
-
-            if (studyActual >= 2 && currentHour < 8) todayBadges.push('early');
-            if (studyActual >= 2 && currentHour >= 22) todayBadges.push('owl');
+            if (studyActual >= 8) todayBadges.push('marathon');
             if (parseFloat(focusRatio) > 5) todayBadges.push('iron');
-            if (parseFloat(focusRatio) > 5 && studyActual >= 50) todayBadges.push('titan');
-            if (studyActual >= 10) todayBadges.push('bedrock');
-            if (studyActual >= 12) todayBadges.push('bulwark');
-            if (studyActual >= 14) todayBadges.push('colossus');
-            if (studyActual >= 17) todayBadges.push('monolith');
 
+            // Calculate running lifetime hours excluding today first
             let totalLifetime = studyActual;
             dateMap.forEach((val, key) => {
                 if (key !== todayKey && key !== todayDateStr) {
@@ -829,9 +785,10 @@
             });
 
             if (totalLifetime >= 100) todayBadges.push('century');
-            if (totalLifetime >= 500) todayBadges.push('unstoppable');
+            if (totalLifetime >= 500) todayBadges.push('fivehundred');
             if (totalLifetime >= 1000) todayBadges.push('thousand');
 
+            // Save today's clean entry representation in map
             dateMap.set(todayKey, {
                 dateKey: todayKey,
                 date: todayDateStr,
@@ -843,12 +800,12 @@
                 screenActual,
                 screenTarget: document.getElementById('targetScreenHours').value || '0',
                 prayerCount: Object.values(prayers).filter(Boolean).length,
-                studyBlocks: JSON.parse(JSON.stringify(studyBlocks)),
                 studyGroups: JSON.parse(JSON.stringify(studyGroups)),
                 exams: JSON.parse(JSON.stringify(exams)),
                 badges: todayBadges
             });
 
+            // Re-sum total lifetime study from all unique dates correctly
             let finalLifetimeStudy = 0;
             let badgeCounts = {};
             BADGES_DEF.forEach(b => badgeCounts[b.id] = 0);
@@ -861,8 +818,6 @@
                     });
                 }
             });
-
-            localStorage.setItem(historyKey, JSON.stringify(Array.from(dateMap.values())));
 
             return {
                 totalLifetimeStudy: finalLifetimeStudy,
@@ -878,14 +833,12 @@
             
             const metrics = computeLifetimeMetrics();
             renderBadgesUI(metrics.unlockedBadges, metrics.badgeCounts);
-            updateStatsAndHistoryDisplay();
 
             const data = {
                 username: currentUser.username,
                 displayName: currentUser.displayName,
                 lastResetDateStr,
                 todoListNumber: document.getElementById('todoListNumber').value,
-                studyBlocks,
                 studyGroups,
                 exams,
                 prayers,
@@ -930,7 +883,6 @@
                 const data = JSON.parse(saved);
                 lastResetDateStr = data.lastResetDateStr || getBDDayKey();
                 document.getElementById('todoListNumber').value = data.todoListNumber || 1;
-                studyBlocks = data.studyBlocks || [];
                 studyGroups = data.studyGroups || [];
                 exams = data.exams || [];
                 prayers = data.prayers || { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
@@ -954,7 +906,6 @@
 
                 if (rewardSaved) applySavedRewardState();
 
-                renderStudyBlocks();
                 renderStudyGroups();
                 renderExams();
                 renderPrayersUI();
@@ -1012,10 +963,10 @@
                 const item = document.createElement('div');
                 item.className = "bg-slate-900/60 p-2.5 rounded-xl flex items-center justify-between border border-slate-800 text-xs";
                 item.innerHTML = `
-                    <div class="flex items-center gap-2.5 cursor-pointer flex-1" onclick="openProfileModal('${u.username}')">
+                    <div class="flex items-center gap-2.5">
                         <span class="font-bold text-slate-500 w-4 text-center">#${index + 1}</span>
                         <div>
-                            <div class="font-bold text-white hover:text-indigo-400 transition">${u.displayName || u.username}</div>
+                            <div class="font-bold text-white">${u.displayName || u.username}</div>
                             <div class="text-[10px] text-slate-400">Ratio: ${u.focusRatio || 0} | Total: ${u.totalLifetimeStudy || 0}h</div>
                         </div>
                     </div>
@@ -1029,89 +980,6 @@
                 `;
                 container.appendChild(item);
             });
-        };
-
-        window.openProfileModal = function(usernameKey) {
-            const users = window.globalLeaderboardUsers || [];
-            const user = users.find(u => (u.username || '').toLowerCase() === usernameKey.toLowerCase() || u.id === usernameKey);
-            if (!user) {
-                alert("User profile data not found.");
-                return;
-            }
-
-            document.getElementById('modalProfileTitle').innerHTML = `<span>👤</span><span>Profile: ${user.displayName || user.username}</span>`;
-            
-            const content = document.getElementById('modalProfileContent');
-            
-            const historyKey = `studyTrackerHistory_${user.username}`;
-            let userHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
-            let totalStudy7 = 0;
-            let totalScreen7 = 0;
-            let count7 = Math.min(7, userHistory.length);
-            if (count7 > 0) {
-                for(let i=0; i<count7; i++) {
-                    totalStudy7 += parseFloat(userHistory[i].studyActual) || 0;
-                    totalScreen7 += parseFloat(userHistory[i].screenActual) || 0;
-                }
-            }
-            const avgStudy7 = count7 > 0 ? (totalStudy7 / count7).toFixed(1) : (user.actualStudyHours || 0).toFixed(1);
-            const avgScreen7 = count7 > 0 ? (totalScreen7 / count7).toFixed(1) : (user.actualScreenHours || 0).toFixed(1);
-
-            let badgesHtml = '';
-            const bCounts = user.badgeCounts || {};
-            BADGES_DEF.forEach(b => {
-                const cnt = bCounts[b.id] || (user.badges && user.badges.includes(b.id) ? 1 : 0);
-                if (cnt > 0) {
-                    badgesHtml += `
-                        <div class="bg-slate-900/80 p-2 rounded-xl border border-indigo-500/40 text-center relative">
-                            <span class="absolute top-1 right-1 px-1.5 py-0.2 bg-indigo-600 text-white font-black text-[8px] rounded-full">x${cnt}</span>
-                            <div class="text-base">${b.icon}</div>
-                            <div class="text-[10px] font-bold text-white mt-0.5">${b.name}</div>
-                        </div>
-                    `;
-                }
-            });
-
-            if (!badgesHtml) {
-                badgesHtml = `<p class="text-slate-500 col-span-4 text-center py-2">No achievements unlocked yet.</p>`;
-            }
-
-            content.innerHTML = `
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-400">Today's Self Study</span>
-                        <p class="text-sm font-black text-indigo-300 mt-1">${user.actualStudyHours || 0} hrs</p>
-                    </div>
-                    <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-400">Today's Screen Time</span>
-                        <p class="text-sm font-black text-amber-300 mt-1">${user.actualScreenHours || 0} hrs</p>
-                    </div>
-                    <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-400">Last 7 Day Avg Study</span>
-                        <p class="text-sm font-black text-indigo-300 mt-1">${avgStudy7} hrs/day</p>
-                    </div>
-                    <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-400">Last 7 Day Avg Screen</span>
-                        <p class="text-sm font-black text-amber-300 mt-1">${avgScreen7} hrs/day</p>
-                    </div>
-                </div>
-
-                <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800 text-center">
-                    <span class="text-[10px] uppercase font-bold text-slate-400">Total Lifetime Self Study</span>
-                    <p class="text-lg font-black text-emerald-400 mt-0.5">${user.totalLifetimeStudy || 0} hours</p>
-                </div>
-
-                <div class="space-y-2">
-                    <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider">All Achievements & Earned Counts</h3>
-                    <div class="grid grid-cols-3 gap-2">${badgesHtml}</div>
-                </div>
-            `;
-
-            document.getElementById('profileModal').classList.remove('hidden');
-        };
-
-        window.closeProfileModal = function() {
-            document.getElementById('profileModal').classList.add('hidden');
         };
 
         window.sendNudge = async function(targetUsername, type) {
@@ -1131,32 +999,27 @@
         }
 
         function performAutoDailyReset(newBDKey) {
+            saveTodayHistory(false);
+
             let currentListNo = parseInt(document.getElementById('todoListNumber').value) || 1;
             document.getElementById('todoListNumber').value = currentListNo + 1;
 
-            studyBlocks = [];
-            studyGroups = [];
-            exams = [];
+            studyGroups.forEach(g => { g.tasks.forEach(t => t.completed = false); });
             prayers = { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false };
             
             document.getElementById('actualStudyHours').value = '';
             document.getElementById('actualScreenHours').value = '';
-            document.getElementById('targetStudyHours').value = '';
-            document.getElementById('targetScreenHours').value = '';
             document.getElementById('classHoursInput').value = '0';
             document.getElementById('failureReasonInput').value = '';
-            document.getElementById('selfRewardInput').value = '';
             document.getElementById('rewardClaimedCheck').checked = false;
 
             isHoursLocked = false;
             applyUnlockedHoursState();
             isRatingLocked = false;
             applyUnlockedRatingState();
-            rewardSaved = false;
 
             lastResetDateStr = newBDKey;
 
-            renderStudyBlocks();
             renderStudyGroups();
             renderExams();
             renderPrayersUI();
@@ -1179,77 +1042,6 @@
         }
 
         function saveListNumber() { saveUserData(); }
-
-        // SELF STUDY BLOCKS SYSTEM LOGIC
-        function addStudyBlock() {
-            const timeRange = document.getElementById('blockTimeRange').value.trim();
-            const targetHours = document.getElementById('blockTargetHours').value.trim();
-            const maxBreaks = document.getElementById('blockMaxBreaks').value.trim();
-
-            if (!timeRange || !targetHours) {
-                alert("Please fill in Time Range and Target Hours for the study block.");
-                return;
-            }
-
-            studyBlocks.push({
-                timeRange,
-                targetHours: parseFloat(targetHours) || 0,
-                maxBreaks: maxBreaks || '15m',
-                completed: false
-            });
-
-            document.getElementById('blockTimeRange').value = '';
-            document.getElementById('blockTargetHours').value = '';
-            document.getElementById('blockMaxBreaks').value = '';
-
-            renderStudyBlocks();
-            syncStudyBlocksToActualHours();
-            saveUserData();
-        }
-
-        function renderStudyBlocks() {
-            const container = document.getElementById('studyBlocksContainer');
-            container.innerHTML = '';
-            if (studyBlocks.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-2">No optional study blocks added today.</p>`;
-                return;
-            }
-
-            studyBlocks.forEach((block, idx) => {
-                let card = document.createElement('div');
-                card.className = "bg-slate-900/60 p-3 rounded-2xl border border-slate-800 flex items-center justify-between text-xs";
-                card.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <input type="checkbox" ${block.completed ? 'checked' : ''} onchange="toggleStudyBlock(${idx})" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
-                        <div>
-                            <span class="font-bold text-indigo-300">${block.timeRange}</span>
-                            <span class="text-slate-400 ml-2">Target: ${block.targetHours}h | Max Break: ${block.maxBreaks}</span>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function toggleStudyBlock(idx) {
-            studyBlocks[idx].completed = !studyBlocks[idx].completed;
-            renderStudyBlocks();
-            syncStudyBlocksToActualHours();
-            saveUserData();
-        }
-
-        function syncStudyBlocksToActualHours() {
-            let checkedTotalHours = 0;
-            studyBlocks.forEach(b => {
-                if (b.completed) {
-                    checkedTotalHours += b.targetHours;
-                }
-            });
-            if (isHoursLocked && checkedTotalHours > 0) {
-                document.getElementById('actualStudyHours').value = checkedTotalHours;
-                saveUserData();
-            }
-        }
 
         function addStudyGroup() {
             const subject = document.getElementById('taskSubject').value.trim();
@@ -1454,8 +1246,8 @@
             document.getElementById('studyModeIndicator').innerText = "Actual Mode";
             
             const btn = document.getElementById('hoursActionBtn');
-            btn.innerText = "💾 Hours Locked & Auto-Saving";
-            btn.className = "w-full py-3 bg-emerald-600/80 text-white text-xs font-bold rounded-xl transition shadow-lg cursor-default";
+            btn.innerText = "💾 Save Actual Hours";
+            btn.className = "w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition shadow-lg cursor-pointer";
         }
 
         function applyUnlockedHoursState() {
@@ -1500,8 +1292,8 @@
             }
         }
 
-        document.getElementById('targetStudyHours').addEventListener('input', () => saveUserData());
-        document.getElementById('targetScreenHours').addEventListener('input', () => saveUserData());
+        document.getElementById('targetStudyHours').addEventListener('input', saveUserData);
+        document.getElementById('targetScreenHours').addEventListener('input', saveUserData);
 
         function togglePrayer(key) {
             prayers[key] = !prayers[key];
@@ -1573,7 +1365,7 @@
             saveUserData();
         }
 
-        document.getElementById('failureReasonInput').addEventListener('input', () => saveUserData());
+        document.getElementById('failureReasonInput').addEventListener('input', saveUserData);
 
         function calculateCompletion() {
             let totalMainTasks = 0;
@@ -1601,8 +1393,22 @@
                 failureCard.classList.remove('hidden');
             }
 
-            saveUserData();
             return percent;
+        }
+
+        function saveTodayHistory(showAlert = true) {
+            if (!currentUser) return;
+            const historyKey = `studyTrackerHistory_${currentUser.username}`;
+            
+            // Compute metrics which deduplicates today's entry cleanly
+            const metrics = computeLifetimeMetrics();
+            localStorage.setItem(historyKey, JSON.stringify(metrics.allHistory));
+
+            updateStatsAndHistoryDisplay();
+            saveUserData();
+            if (showAlert) {
+                alert("Today's planner history saved successfully!");
+            }
         }
 
         function updateStatsAndHistoryDisplay() {
@@ -1664,8 +1470,6 @@
         }
 
         function openPreviewModal() {
-            saveUserData();
-
             document.getElementById('prevPreviewName').innerText = currentUser.displayName;
             document.getElementById('prevPreviewMeta').innerText = `To-Do List No: #${document.getElementById('todoListNumber').value} • ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
 
